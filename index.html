@@ -1,1 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Montería Simulator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #1a2512;
+            font-family: sans-serif;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 500px; /* Limite para simular móvil en PC */
+            background: #2d3a22;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: linear-gradient(to bottom, #4a5d3e, #2d3a22);
+        }
+        /* Indicador visual del cerrojo */
+        #boltIndicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 10px;
+            background: #555;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #fff;
+        }
+        #boltBar {
+            width: 100%;
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
 
+<div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    <div id="boltIndicator"><div id="boltBar"></div></div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const boltBar = document.getElementById('boltBar');
+
+// Ajustar resolución interna del canvas
+function resize() {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- CONFIGURACIÓN DE FÍSICA Y TIEMPOS ---
+const BULLET_FLIGHT_TIME = 0.18; // Segundos que tarda la bala en llegar (Simula distancia)
+const BOLT_ACTION_TIME = 1500;   // Tiempo de recarga del cerrojo en milisegundos
+
+// --- ESTADO DEL JUEGO ---
+let crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
+let entities = [];
+let trees = [];
+let particles = [];
+let lastSpawnTime = 0;
+let nextSpawnDelay = 1000;
+let lastShotTime = 0;
+let canShoot = true;
+
+// --- GENERACIÓN DE ENTORNO (PINOS) ---
+// Creamos pinos en 3 capas de profundidad
+function initTrees() {
+    trees = [];
+    // Capa fondo (detrás de los animales)
+    for(let i=0; i<8; i++) {
+        trees.push({ x: Math.random() * canvas.width, width: 15 + Math.random()*15, layer: 'back', color: '#1e2916' });
+    }
+    // Capa medio
+    for(let i=0; i<6; i++) {
+        trees.push({ x: Math.random() * canvas.width, width: 25 + Math.random()*15, layer: 'mid', color: '#162010' });
+    }
+    // Capa frente (tapan a los animales)
+    for(let i=0; i<5; i++) {
+        trees.push({ x: Math.random() * canvas.width, width: 40 + Math.random()*20, layer: 'front', color: '#0f170a' });
+    }
+}
+initTrees();
+
+// --- CLASES DE ENTIDADES ---
+class Animal {
+    constructor(type, yOffset, speed, direction, delay = 0) {
+        this.type = type; // 'big_boar', 'small_boar', 'dog'
+        this.direction = direction; // 1 izquierda a derecha, -1 derecha a izquierda
+        this.speed = speed * direction;
+        
+        // Dimensiones según tipo
+        if(type === 'big_boar') {
+            this.width = 45; this.height = 28; this.hp = 2; this.color = '#3d2b1f';
+        } else if(type === 'small_boar') {
+            this.width = 25; this.height = 16; this.hp = 1; this.color = '#6e4f3a';
+        } else { // Perro
+            this.width = 30; this.height = 20; this.hp = 999; this.color = '#d6c5b3'; // Al perro no se le mata
+        }
+
+        // Posición inicial fuera de pantalla con retraso para el efecto piara
+        this.x = direction === 1 ? -this.width - delay : canvas.width + delay;
+        this.y = (canvas.height * 0.4) + yOffset; 
+        
+        this.dead = false;
+        this.deathTimer = 0;
+        this.angle = 0; // Para la animación de caída
+    }
+
+    update(dt) {
+        if (this.dead) {
+            this.deathTimer += dt * 1000;
+            if(this.angle < Math.PI / 2) this.angle += 0.1; // Cae de lado
+            return;
+        }
+        this.x += this.speed * dt * 60;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x + this.width/2, this.y + this.height/2);
+        ctx.rotate(this.angle);
+        
+        // Cuerpo base (Silueta)
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        if(this.type === 'dog') {
+            // Dibujo rápido de perro estilizado
+            ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI*2);
+            // Cabeza alta
+            ctx.fillRect(this.direction * 10, -12, 10, 10);
+        } else {
+            // Jabalí (Forma de cuña delantera)
+            ctx.moveTo(-this.width/2, this.height/4);
+            ctx.lineTo(this.width/2, -this.height/2); // Jeta alta
+            ctx.lineTo(this.width/2, this.height/2);
+            ctx.lineTo(-this.width/2, this.height/2);
+            ctx.closePath();
+            ctx.fill();
+            // Cerdas/Crina superior
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(-this.width/4, -this.height/4);
+            ctx.lineTo(this.width/4, -this.height/3);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// --- LOGICA DE SPAWN ALEATORIO (PIARAS) ---
+function spawnGroup() {
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    const baseSpeed = 3 + Math.random() * 4; // Velocidad variable cada vez
+    const yBase = Math.random() * 80;        // Altura aleatoria en el pinar
+
+    const r = Math.random();
+    if (r < 0.4) {
+        // Jabalí solitario grande
+        entities.push(new Animal('big_boar', yBase, baseSpeed, direction));
+    } else if (r < 0.8) {
+        // Una piara: 1 o 2 grandes + varios pequeños
+        const numBig = 1 + Math.floor(Math.random() * 2);
+        const numSmall = 2 + Math.floor(Math.random() * 4);
+        
+        let delayAccum = 0;
+        // Madres adelante
+        for(let i=0; i<numBig; i++) {
+            delayAccum += Math.random() * 40;
+            entities.push(new Animal('big_boar', yBase + (Math.random()*20 - 10), baseSpeed, direction, delayAccum));
+        }
+        // Rayones detrás
+        for(let i=0; i<numSmall; i++) {
+            delayAccum += 30 + Math.random() * 30;
+            entities.push(new Animal('small_boar', yBase + 10 + (Math.random()*15), baseSpeed * 1.05, direction, delayAccum));
+        }
+        
+        // Un perro de rehala pisándoles los talones (70% de probabilidad)
+        if(Math.random() > 0.3) {
+            delayAccum += 80 + Math.random()*50;
+            entities.push(new Animal('dog', yBase + (Math.random()*10 - 5), baseSpeed * 1.15, direction, delayAccum));
+        }
+    } else {
+        // Solo un par de jabalíes medianos/pequeños corriendo juntos
+        entities.push(new Animal('small_boar', yBase, baseSpeed + 1, direction, 0));
+        entities.push(new Animal('small_boar', yBase + 15, baseSpeed + 1, direction, 35));
+    }
+}
+
+// --- PARTICULAS DE IMPACTO (SANGRE / POLVO) ---
+function createImpactParticles(x, y, type) {
+    const color = type === 'blood' ? '#990000' : '#c2b280';
+    for(let i=0; i<15; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6 - 2,
+            radius: 3 + Math.random() * 4,
+            alpha: 1,
+            color: color,
+            life: 20 + Math.random() * 20
+        });
+    }
+}
+
+// --- LOGICA DE DISPARO (ADELANTO DE TIRO) ---
+function shoot() {
+    if (!canShoot) return;
+    canShoot = false;
+    lastShotTime = performance.now();
+
+    const shotX = crosshair.x;
+    const shotY = crosshair.y;
+    let hitAnything = false;
+
+    // Comprobar colisión con el cálculo del adelanto de la bala
+    for (let ent of entities) {
+        if (ent.dead || ent.type === 'dog') continue;
+
+        // ¿Dónde estará el jabalí tras el tiempo de vuelo de la bala?
+        // ent.speed ya incluye los hercios, calculamos píxeles futuros:
+        const futureX = ent.x + (ent.speed * BULLET_FLIGHT_TIME * 60);
+
+        // Caja de colisión en posición futura
+        if (shotX >= futureX && shotX <= futureX + ent.width &&
+            shotY >= ent.y && shotY <= ent.y + ent.height) {
+            
+            ent.hp--;
+            createImpactParticles(shotX, shotY, 'blood');
+            hitAnything = true;
+
+            if (ent.hp <= 0) {
+                ent.dead = true;
+            }
+            break; // Solo impacta a uno por bala
+        }
+    }
+
+    // Si falló el tiro (no dio a ningún jabalí), ráfaga de polvo
+    if (!hitAnything) {
+        createImpactParticles(shotX, shotY, 'dust');
+    }
+}
+
+// --- CONTROLES TÁCTILES (ADAPTADO A MÓVIL VERTICAL) ---
+function updateCrosshair(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    
+    // El punto rojo sigue suavemente la posición del dedo
+    crosshair.x = touch.clientX - rect.left;
+    crosshair.y = touch.clientY - rect.top;
+}
+
+// Eventos tanto para mouse como para pantallas táctiles
+canvas.addEventListener('mousemove', updateCrosshair);
+canvas.addEventListener('touchmove', updateCrosshair, { passive: false });
+
+// Al levantar el dedo o hacer clic, se efectúa el disparo
+canvas.addEventListener('mouseup', shoot);
+canvas.addEventListener('touchend', (e) => { e.preventDefault(); shoot(); }, { passive: false });
+
+
+// --- BUCLE PRINCIPAL DE RENDERIZADO (GAME LOOP) ---
+let lastTime = 0;
+
+function loop(timestamp) {
+    let dt = (timestamp - lastTime) / 1000;
+    if (dt > 0.1) dt = 0.1; // Prevenir saltos gigantes
+    lastTime = timestamp;
+
+    // 1. Manejo del cerrojo (Recarga)
+    if (!canShoot) {
+        const elapsed = timestamp - lastShotTime;
+        const progress = Math.min(elapsed / BOLT_ACTION_TIME, 1);
+        boltBar.style.width = (progress * 100) + '%';
+        if (progress >= 1) {
+            canShoot = true;
+        }
+    } else {
+        boltBar.style.width = '100%';
+    }
+
+    // 2. Control de Spawn aleatorio
+    if (timestamp - lastSpawnTime > nextSpawnDelay) {
+        spawnGroup();
+        lastSpawnTime = timestamp;
+        nextSpawnDelay = 3000 + Math.random() * 4000; // Entre 3 y 7 segundos por piara
+    }
+
+    // 3. Limpieza de pantalla
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- RENDERIZAR CAPAS ---
+    
+    // Capa de árboles trasera
+    trees.filter(t => t.layer === 'back').forEach(t => {
+        ctx.fillStyle = t.color;
+        ctx.fillRect(t.x, 0, t.width, canvas.height);
+    });
+
+    // Capa de árboles intermedia
+    trees.filter(t => t.layer === 'mid').forEach(t => {
+        ctx.fillStyle = t.color;
+        ctx.fillRect(t.x, 0, t.width, canvas.height);
+    });
+
+    // Actualizar y dibujar animales (Jabalíes y perros)
+    entities.forEach(ent => {
+        ent.update(dt);
+        ent.draw();
+    });
+
+    // Limpiar entidades muertas que ya cayeron o salieron de pantalla
+    entities = entities.filter(ent => {
+        const outLeft = ent.direction === -1 && ent.x < -200;
+        const outRight = ent.direction === 1 && ent.x > canvas.width + 200;
+        const longDead = ent.dead && ent.deathTimer > 3000;
+        return !outLeft && !outRight && !longDead;
+    });
+
+    // Capa de árboles frontal (los pinos que ocultan piezas)
+    trees.filter(t => t.layer === 'front').forEach(t => {
+        ctx.fillStyle = t.color;
+        ctx.fillRect(t.x, 0, t.width, canvas.height);
+    });
+
+    // Actualizar y dibujar partículas (Sangre/Polvo)
+    particles.forEach((p, index) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1; // Gravedad leve
+        p.alpha = Math.max(0, p.life / 40);
+        p.life--;
+
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    });
+    particles = particles.filter(p => p.life > 0);
+
+    // --- DIBUJAR MIRA DE PUNTO ROJO (ESTILO AIMPOINT) ---
+    ctx.save();
+    // Estructura metálica exterior de la mira (Círculo negro sutil)
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(crosshair.x, crosshair.y, 35, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // El punto rojo central brillante
+    ctx.fillStyle = '#ff0000';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#ff0000';
+    ctx.beginPath();
+    ctx.arc(crosshair.x, crosshair.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    requestAnimationFrame(loop);
+}
+
+// Iniciar simulador
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
