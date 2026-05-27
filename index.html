@@ -3,291 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulador de Montería Profesional estilo GAIM</title>
+    <title>Montero Pro Simulator</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        body {
-            background-color: #0b0f07;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            color: #ddd;
-        }
-        #gameArea {
-            position: relative;
-            flex: 1;
-            width: 100%;
-            background: linear-gradient(to bottom, #3b4c35, #172012);
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        /* --- BOTÓN DE PAUSA --- */
-        #pauseBtn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 45px;
-            height: 45px;
-            background: rgba(17, 17, 17, 0.85);
-            border: 2px solid #444;
-            color: white;
-            border-radius: 8px;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        /* --- MENÚ DE PAUSA --- */
-        #pauseMenu {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(5, 5, 5, 0.85);
-            z-index: 20;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .menu-box {
-            background: #1a1f16;
-            border: 3px solid #3b4c35;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            max-width: 90%;
-            width: 360px;
-        }
-        .menu-box h2 {
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            color: #d47320;
-        }
-        .menu-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #2c3525;
-            border: 1px solid #4c5c41;
-            color: white;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .menu-btn:active {
-            background: #4c5c41;
-        }
-        .menu-btn.selected {
-            border-color: #d47320;
-            background: #3e4a34;
-            box-shadow: 0 0 8px rgba(212, 115, 32, 0.4);
-        }
-        /* --- PANEL ÚNICO DE APUNTAR --- */
-        #controlsArea {
-            height: 140px;
-            width: 100%;
-            background-color: #111;
-            border-top: 3px solid #252525;
-            padding: 12px;
-            position: relative;
-        }
-        #trackpad {
-            width: 100%;
-            height: 100%;
-            background: #161616;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            font-size: 13px;
-            font-weight: bold;
-            border: 2px dashed #333;
-            letter-spacing: 1px;
-            text-align: center;
-            line-height: 1.5;
-            position: relative;
-            overflow: hidden;
-        }
-        #boltBar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 6px;
-            width: 100%;
-            background: #c0392b;
-            transition: width 0.05s linear;
-        }
-        #boltBar.ready {
-            background: #27ae60;
-        }
-        #trackpad.active {
-            border-color: #8b0000;
-            color: #8b0000;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #111; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        
+        #gameContainer { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        canvas { width: 100%; height: 60%; background: #2a3d24; display: block; }
+        
+        /* Interfaz del Trackpad (Optimizado Móvil Vertical) */
+        #trackpad { width: 100%; height: 40%; background: linear-gradient(135deg, #2c1d11, #1a110a); border-top: 4px solid #4a3319; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; text-align: center; padding: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+        #trackpad.active { background: linear-gradient(135deg, #3d2919, #26190f); }
+        
+        #boltBar { position: absolute; top: 0; left: 0; height: 6px; background: #ff3b30; width: 100%; transition: width 0.1s linear; }
+        #boltBar.ready { background: #4cd964; }
+
+        /* Menús e Interfaces Flotantes */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 30px; text-align: center; }
+        .menu-card { background: #222; border: 3px solid #5a4225; padding: 20px; border-radius: 10px; width: 100%; max-width: 360px; box-shadow: 0 0 20px rgba(0,0,0,0.6); }
+        
+        h1 { color: #d4a373; font-size: 24px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; }
+        h3 { color: #aaa; font-size: 14px; margin: 15px 0 5px 0; text-align: left; text-transform: uppercase; }
+        
+        /* Botones e Inputs Estilo Rústico */
+        button { background: #4a3319; color: #fff; border: 2px solid #6e4e2a; padding: 12px 20px; font-size: 14px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 5px; width: 100%; margin: 8px 0; text-transform: uppercase; transition: all 0.2s; }
+        button:active, button.selected { background: #d4a373; color: #111; border-color: #fff; }
+        
+        .selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 5px; }
+        .selector-grid button { font-size: 11px; padding: 8px; margin: 0; }
+        
+        /* HUD de Juego */
+        #hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 5; pointer-events: none; font-size: 13px; font-weight: bold; text-shadow: 2px 2px 3px #000; }
+        #pauseBtn { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; padding: 0; margin: 0; z-index: 6; border-radius: 50%; background: rgba(74,51,25,0.7); }
     </style>
 </head>
 <body>
 
-<div id="gameArea">
+<div id="gameContainer">
+    <div id="hud">
+        <span id="txtTiempo">TIEMPO: 30s</span>
+        <span id="txtKills">RESES: 0/0</span>
+    </div>
     <button id="pauseBtn">⏸</button>
+
     <canvas id="gameCanvas"></canvas>
-    
-    <div id="pauseMenu">
-        <div class="menu-box">
-            <h2>PAUSA TÁCTICA</h2>
-            <button class="menu-btn selected" id="btnRifle">RIFLE DE CERROJO (Aimpoint)</button>
-            <button class="menu-btn" id="btnEscopeta">ESCOPETA SEMIAUTOMÁTICA (3 Tiros)</button>
-            <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
-            <button class="menu-btn" id="btnResume" style="background: #8b0000; border-color: #b22222;">RESUMIR JUEGO</button>
+
+    <div id="trackpad">
+        <div id="boltBar"></div>
+        <span id="trackpadLabel">CARGANDO SIMULADOR...</span>
+    </div>
+
+    <div id="mainMenu" class="overlay">
+        <div class="menu-card">
+            <h1>MONTERÍA PRO</h1>
+            <p style="font-size: 11px; color:#888; margin-bottom: 15px;">Simulador de Armas e Impactos Balísticos</p>
+            
+            <h3>MODO DE JUEGO</h3>
+            <div class="selector-grid">
+                <button id="btnModoCortadero" class="selected">Cortadero</button>
+                <button id="btnModoPatos">Ribera Patos</button>
+            </div>
+
+            <h3>ESPECIES ACTIVAS</h3>
+            <div class="selector-grid">
+                <button id="cfgBoar" class="selected">Jabalí</button>
+                <button id="cfgCiervo" class="selected">Venado</button>
+                <button id="cfgMuflon" class="selected">Muflón</button>
+                <button id="cfgCorzo" class="selected">Corzo</button>
+            </div>
+
+            <button id="btnStart" style="background:#557a46; border-color:#7a9d54; margin-top:20px; font-size:16px;">Sueltar Rehala (Jugar)</button>
+        </div>
+    </div>
+
+    <div id="resultsMenu" class="overlay" style="display:none;">
+        <div class="menu-card">
+            <h1 id="resTitle">FIN DE LA MANGA</h1>
+            <p id="resDetails" style="margin: 20px 0; font-size: 16px; line-height: 1.6;"></p>
+            <button id="btnRestart" style="background:#557a46;">Nueva Entrada</button>
+        </div>
+    </div>
+
+    <div id="pauseMenu" class="overlay" style="display:none;">
+        <div class="menu-card">
+            <h1>PAUSA DE CAZA</h1>
+            <h3>CAMBIAR ARMA ENCARADA</h3>
+            <button id="btnRifle" class="selected">Rifle Cerrojo (Aimpoint)</button>
+            <button id="btnEscopeta">Semiautomática Madera</button>
+            <hr style="border:1px solid #333; margin:15px 0;">
+            <button id="btnResume" style="background:#7a9d54;">Doblar Puesto (Continuar)</button>
         </div>
     </div>
 </div>
 
-<div id="controlsArea">
-    <div id="trackpad">
-        MANTÉN PARA CONFIGURAR ENCARE<br>¡SUELTA EL PULGAR PARA DISPARAR!
-        <div id="boltBar"></div>
-    </div>
-</div>
-
 <script>
+// --- MOTOR DE AUDIO SINTÉTICO (Web Audio API - Cero Archivos Externos) ---
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playSound(type) {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    
+    if (type === 'shotgun') {
+        // Disparo seco y expansivo de cartucho de escopeta/balas
+        let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        let bufferSize = audioCtx.sampleRate * 0.5, buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        let noise = audioCtx.createBufferSource(); noise.buffer = buffer;
+        let noiseFilter = audioCtx.createBiquadFilter(); noiseFilter.type = 'lowpass'; noiseFilter.frequency.setValueAtTime(400, now);
+        noiseFilter.frequency.exponentialRampToValueAtTime(10, now + 0.3);
+        let noiseGain = audioCtx.createGain(); noiseGain.gain.setValueAtTime(1.5, now); noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination); noise.start(now);
+    } 
+    else if (type === 'rifle') {
+        // Trueno de alta velocidad (Rifle de caza mayor)
+        let bufferSize = audioCtx.sampleRate * 0.6, buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        let noise = audioCtx.createBufferSource(); noise.buffer = buffer;
+        let noiseFilter = audioCtx.createBiquadFilter(); noiseFilter.type = 'bandpass'; noiseFilter.frequency.setValueAtTime(600, now);
+        let noiseGain = audioCtx.createGain(); noiseGain.gain.setValueAtTime(2.0, now); noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination); noise.start(now);
+    } 
+    else if (type === 'bolt') {
+        // Sonido mecánico del cerrojo Mauser (Chic-Chic)
+        let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(1200, now);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.setValueAtTime(0, now + 0.05);
+        gain.gain.setValueAtTime(0.1, now + 0.15); gain.gain.setValueAtTime(0, now + 0.22);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.3);
+    }
+    else if (type === 'bark') {
+        // Ladrido latido de Podenco / Sabueso en rastro calificado
+        let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.2);
+    }
+}
+
+// --- VARIABLES DE CONFIGURACIÓN Y ESTADO GLOBAL ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const boltBar = document.getElementById('boltBar');
 const trackpad = document.getElementById('trackpad');
-const pauseBtn = document.getElementById('pauseBtn');
-const pauseMenu = document.getElementById('pauseMenu');
-const btnRifle = document.getElementById('btnRifle');
-const btnEscopeta = document.getElementById('btnEscopeta');
-const btnResume = document.getElementById('btnResume');
+const boltBar = document.getElementById('boltBar');
 
-function resize() {
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+// Ajuste dinámico de dimensiones físicas del Canvas
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight * 0.6;
 }
-window.addEventListener('resize', resize);
-resize();
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-// --- CONFIGURACIÓN DE GAIM ---
-const BULLET_FLIGHT_TIME = 0.09;     
-const TRACKPAD_SENSITIVITY = 1.6;   
-const ALERT_PAUSE_DURATION = 900;   
-const PANIC_SPEED_MULTIPLIER = 1.45;  
+let isPaused = true, gameTimer = 30, totalSpawns = 0, totalKills = 0, lastSpawnTime = 0, gameActive = false;
+let currentWeapon = 'rifle', canShoot = true, lastShotTime = 0, recoilY = 0;
+let PiaraAlerted = false, entities = [], particles = [], trees = [];
+let crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
 
-// --- CONFIGURACIÓN DE ARMAS ---
-let currentWeapon = 'rifle'; // 'rifle' o 'escopeta'
-let isPaused = false;
+// Constantes Balísticas (Estilo simulador GAIM)
+const RIFLE_BOLT_TIME = 1200, SHOTGUN_FIRE_DELAY = 450, BULLET_FLIGHT_TIME = 0.04, TRACKPAD_SENSITIVITY = 1.6;
+const ALERT_PAUSE_DURATION = 400, PANIC_SPEED_MULTIPLIER = 1.95;
 
-// Estado del Rifle
-const RIFLE_BOLT_TIME = 1000;       
+// Variables de Menú de Especies
+let mode = 'cortadero'; // 'cortadero' o 'patos'
+let activeSpecies = { boar: true, ciervo: true, muflon: true, corzo: true };
 
-// Estado de Escopeta Semiautomática de 3 Tiros
-let shotgunAmmo = 3;
-let isShotgunReloading = false;
-const SHOTGUN_FIRE_DELAY = 350; // Semiautomática rápida entre tiros
-const SHOTGUN_RELOAD_TIME = 1800; // Tiempo total de meter 3 cartuchos
-
-// --- ESTADO GENERAL ---
-let crosshair = { x: canvas.width / 2, y: canvas.height * 0.45 };
-let entities = [];
-let trees = [];
-let particles = [];
-let lastSpawnTime = 0;
-let lastShotTime = 0;
-let canShoot = true;
-let PiaraAlerted = false;
-let recoilY = 0; 
-
-// --- GENERACIÓN DE ÁRBOLES SIMPLES (Estilo entorno GAIM minimalista) ---
-function initTrees() {
+// --- IMPLEMENTACIÓN DEL ENTORNO DE MONTE Y MONTAÑAS (FOTORREALISTA) ---
+function generateEnvironment() {
     trees = [];
-    const borderZone = canvas.width * 0.15;
-    for (let i = 0; i < 14; i++) {
-        const isLeft = Math.random() > 0.5;
-        const xBase = isLeft ? Math.random() * borderZone : canvas.width - (Math.random() * borderZone);
-        const layer = Math.random() > 0.5 ? 'front' : 'back';
-        trees.push({ x: xBase, width: 22 + Math.random()*12, layer: layer, trunkColor: layer === 'back' ? '#3d2a1c' : '#543b29' });
-    }
-}
-initTrees();
-
-// --- AUXILIAR: TEXTURA DE PELO FOTORREALISTA POR CÓDIGO ---
-function drawAnimalHairTexture(ctx, w, h, seedColor) {
-    ctx.fillStyle = seedColor;
-    ctx.fillRect(-w/2, -h/2, w, h);
-    // Trazos finos para simular textura de cerdas rígidas/pelo de caza mayor
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 1;
-    for (let i = -w/2; i < w/2; i += 4) {
-        ctx.beginPath();
-        ctx.moveTo(i, -h/2 + Math.random()*4);
-        ctx.lineTo(i + (Math.random()*2 - 1), h/2 - Math.random()*4);
-        ctx.stroke();
+    let numTrees = mode === 'cortadero' ? 14 : 6;
+    for (let i = 0; i < numTrees; i++) {
+        trees.push({
+            x: Math.random() * canvas.width,
+            width: 25 + Math.random() * 35,
+            layer: Math.random() > 0.4 ? 'back' : 'front',
+            trunkColor: `rgb(${40 + Math.random()*20}, ${25 + Math.random()*15}, 15)`
+        });
     }
 }
 
-// --- ANIMALES COMPLETA (Foco hiperrealista en anatomía) ---
+// --- CLASE ANIMAL CON GEOMETRÍA ANATÓMICA DETALLADA ---
 class Animal {
-    constructor(type, yOffset, speed, direction, delay = 0) {
-        this.type = type; 
+    constructor(type, yOffset, speed, direction, delay = 0, isFemale = false, packLeader = null) {
+        this.type = type;
         this.direction = direction;
-        this.originalSpeed = (1.4 + speed * 1.2);
+        this.isFemale = isFemale;
+        this.packLeader = packLeader; // Para mecánicas de pelotas de muflones/ciervos
         
-        if (type === 'corzo') this.originalSpeed *= 1.3; 
-        if (type === 'ciervo') this.originalSpeed *= 1.15;  
+        // Ajuste de velocidades base por especie
+        this.originalSpeed = (1.2 + speed * 1.1);
+        if (type === 'corzo') this.originalSpeed *= 1.4;
+        if (type === 'ciervo') this.originalSpeed *= 1.25;
+        if (type === 'pato') this.originalSpeed *= 1.8;
         this.currentSpeed = this.originalSpeed * direction;
-        
-        // Dimensiones proporcionales GAIM
-        if (type === 'big_boar')   { this.width = 82; this.height = 56; }
-        else if (type === 'small_boar') { this.width = 46; this.height = 32; }
-        else if (type === 'ciervo')     { this.width = 90; this.height = 80; }
+
+        // Dimensiones físicas proporcionales
+        if (type === 'big_boar')       { this.width = 78; this.height = 54; }
+        else if (type === 'small_boar') { this.width = 44; this.height = 30; }
+        else if (type === 'ciervo')     { this.width = 95; this.height = 85; }
         else if (type === 'corzo')      { this.width = 44; this.height = 48; }
-        else if (type === 'muflon')     { this.width = 72; this.height = 54; }
-        else if (type === 'dog')        { this.width = 44; this.height = 32; }
+        else if (type === 'muflon')     { this.width = 74; this.height = 56; }
+        else if (type === 'dog')        { this.width = 42; this.height = 32; this.originalSpeed *= 1.35; this.currentSpeed = this.originalSpeed * direction; }
+        else if (type === 'pato')       { this.width = 38; this.height = 28; }
 
         this.x = direction === 1 ? -this.width - delay : canvas.width + delay;
-        this.y = (canvas.height * 0.40) + yOffset - (type === 'ciervo' ? 24 : (type === 'corzo' ? 14 : 0));
-        
+        // Altura de carrera fija según ecosistema
+        if (type === 'pato') {
+            this.y = (canvas.height * 0.15) + yOffset;
+        } else {
+            this.y = (canvas.height * 0.52) + yOffset - (type === 'ciervo' ? 24 : (type === 'corzo' ? 14 : 0));
+        }
+
         this.dead = false; this.deathTimer = 0; this.angle = 0; this.legCycle = 0;
         this.alertPaused = false; this.alertPauseTimer = 0; this.panicked = false;
+        
+        // Atributo específico para perros de agarre
+        this.dogTarget = null; this.barkTimer = Math.random() * 500; this.hasBitten = false;
     }
 
     update(dt) {
         if (this.dead) {
-            this.deathTimer += dt * 1000;
-            if(this.angle < Math.PI / 2) this.angle += 0.25; 
+            this.deathTimer += dt;
+            if (this.angle < Math.PI / 2) this.angle += 0.18;
             return;
         }
-        if (PiaraAlerted && !this.panicked && this.type !== 'dog') {
-            if (!this.alertPaused) { this.alertPaused = true; this.alertPauseTimer = 0; this.currentSpeed = 0; }
-            this.alertPauseTimer += dt * 1000;
+
+        // LÓGICA DE LA REHALA DE PODENCOS (Solo acosan a Macarenos 'big_boar')
+        if (this.type === 'dog') {
+            this.barkTimer += dt;
+            if (this.barkTimer > 450) { playSound('bark'); this.barkTimer = 0; }
+
+            if (!this.dogTarget) {
+                // Buscar el jabalí grande vivo más cercano en su línea de carrera
+                this.dogTarget = entities.find(e => e.type === 'big_boar' && !e.dead && Math.abs(e.x - this.x) < 350);
+            } else {
+                if (this.dogTarget.dead) {
+                    this.dogTarget = null;
+                    this.currentSpeed = this.originalSpeed * this.direction;
+                } else {
+                    // Perseguir dinámicamente acelerando el paso
+                    let dist = this.dogTarget.x - this.x;
+                    if (Math.abs(dist) > 20) {
+                        this.currentSpeed = (this.dogTarget.currentSpeed * 1.15);
+                    } else {
+                        // AGARRE: Se sube al jabalí y frena su avance rígidamente
+                        this.hasBitten = true;
+                        this.currentSpeed = this.dogTarget.currentSpeed;
+                        this.x = this.dogTarget.x - (15 * this.direction);
+                        this.y = this.dogTarget.y + 12;
+                    }
+                }
+            }
+        }
+
+        // Seguir al jefe de la pelota/manada si existe
+        if (this.packLeader && !this.packLeader.dead && !this.dead) {
+            this.x = this.packLeader.x - (45 * this.direction) + (this.isFemale ? -15 : 0);
+            this.currentSpeed = this.packLeader.currentSpeed;
+            if (this.packLeader.alertPaused) { this.currentSpeed = 0; }
+        }
+
+        // Gestión de alertas por detonación general
+        if (PiaraAlerted && !this.panicked && this.type !== 'dog' && this.type !== 'pato') {
+            // El jabalí agarrado no puede pararse por alerta
+            if (!this.alertPaused && !this.hasBitten) { 
+                this.alertPaused = true; 
+                this.alertPauseTimer = 0; 
+                this.currentSpeed = 0; 
+            }
+            this.alertPauseTimer += dt;
             if (this.alertPauseTimer >= ALERT_PAUSE_DURATION) {
                 this.panicked = true; this.alertPaused = false;
                 this.currentSpeed = this.originalSpeed * PANIC_SPEED_MULTIPLIER * this.direction;
             }
         }
-        this.x += this.currentSpeed * dt * 60;
-        this.legCycle += Math.abs(this.currentSpeed === 0 ? this.originalSpeed * 0.12 : this.currentSpeed) * 0.28;
+
+        const step = dt / 16.66;
+        this.x += this.currentSpeed * step;
+        this.legCycle += Math.abs(this.currentSpeed === 0 ? this.originalSpeed * 0.15 : this.currentSpeed) * 0.25 * step;
     }
 
     draw() {
@@ -299,186 +297,196 @@ class Animal {
         let swing = Math.sin(this.legCycle) * 9;
 
         if (this.type === 'dog') {
-            // Rehala Sabueso Realista
-            ctx.fillStyle = '#b59469';
-            ctx.beginPath(); ctx.ellipse(0, 2, 22, 11, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#eed4b0'; ctx.fillRect(14, -13, 10, 10); // Cabeza
-            ctx.fillStyle = '#7a5e3b'; ctx.fillRect(11, -10, 4, 11); // Oreja caída
-            ctx.fillStyle = '#222'; ctx.fillRect(-22, -6, 4, 12); // Cola alzada
+            // Sabueso de Rehala Español
+            ctx.fillStyle = '#dcd0c0';
+            ctx.beginPath(); ctx.ellipse(0, 2, 20, 11, 0, 0, Math.PI*2); ctx.fill(); // Cuerpo
+            ctx.fillStyle = '#b59469'; ctx.fillRect(12, -12, 9, 9); // Cabeza
+            ctx.fillStyle = '#7a5e3b'; ctx.fillRect(9, -9, 4, 10); // Oreja caída
+            ctx.fillStyle = '#fff'; ctx.fillRect(-20, -5, 4, 11); // Cola en vela
             ctx.fillStyle = '#9e7d52';
-            ctx.fillRect(6, 12, 4.5, 14 + swing); ctx.fillRect(-12, 12, 4.5, 14 - swing);
-            
-        } else if (this.type === 'ciervo') {
-            // Venado Capa fotorrealista degradada
-            ctx.fillStyle = '#402a13'; // Piernas sombra
-            ctx.fillRect(-18, 14, 5, 28 - swing); ctx.fillRect(14, 14, 5, 28 + swing);
-            
-            // Cuerpo musculado
-            let bodyGrad = ctx.createRadialGradient(-5, -2, 10, -5, -2, 30);
-            bodyGrad.addColorStop(0, '#8e653c'); bodyGrad.addColorStop(1, '#5c4024');
-            ctx.fillStyle = bodyGrad;
-            ctx.beginPath(); ctx.ellipse(-6, 2, 32, 18, 0, 0, Math.PI*2); ctx.fill(); 
-            
-            // Cuello anatomía esbelta
-            ctx.fillStyle = '#73502e'; ctx.save(); ctx.rotate(-0.5); ctx.fillRect(16, -32, 16, 34); ctx.restore();
-            // Cabeza fina
-            ctx.fillStyle = '#8e653c'; ctx.fillRect(22, -36, 22, 11);
-            // Pecho y grupa clara
-            ctx.fillStyle = '#b89674'; ctx.beginPath(); ctx.ellipse(-34, 2, 6, 10, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillRect(5, 11, 4, 14 + swing); ctx.fillRect(-10, 11, 4, 14 - swing); // Extremidades
+        } 
+        else if (this.type === 'ciervo') {
+            // Venado / Cierva Orgánica
+            ctx.fillStyle = '#422c1b'; ctx.fillRect(-16, 14, 5, 28 - swing); ctx.fillRect(14, 14, 5, 28 + swing);
+            ctx.fillStyle = '#6b4728'; ctx.beginPath(); ctx.ellipse(-5, 2, 34, 16, 0, 0, Math.PI*2); ctx.fill(); // Tronco musculado
+            ctx.fillStyle = '#54381f'; ctx.save(); ctx.rotate(-0.5); ctx.fillRect(16, -30, 14, 32); ctx.restore(); // Cuello esbelto
+            ctx.fillStyle = '#6b4728'; ctx.fillRect(20, -34, 20, 11); // Cabeza cónica
+            ctx.fillStyle = '#ffd1a4'; ctx.beginPath(); ctx.ellipse(-36, 2, 5, 9, 0, 0, Math.PI*2); ctx.fill(); // Escudo anal blanco
 
-            // Cuerna texturizada fidedigna de Montero
-            ctx.strokeStyle = '#cfc2b2'; ctx.lineWidth = 3.5; ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 2;
-            ctx.beginPath();
-            ctx.moveTo(22, -36); ctx.lineTo(14, -62); ctx.lineTo(2, -68); 
-            ctx.moveTo(16, -48); ctx.lineTo(4, -53); 
-            ctx.moveTo(14, -58); ctx.lineTo(24, -68); ctx.moveTo(11, -64); ctx.lineTo(6, -76);
-            ctx.stroke(); ctx.shadowBlur = 0;
-
-            ctx.fillStyle = '#73502e';
-            ctx.fillRect(-12, 14, 5.5, 28 + swing); ctx.fillRect(19, 14, 5.5, 28 - swing);
-
-        } else if (this.type === 'corzo') {
-            // Corzo "Duende del bosque" - Esbelto y asustadizo
-            ctx.fillStyle = '#78471a';
-            ctx.fillRect(-10, 10, 3.5, 20 - swing); ctx.fillRect(8, 10, 3.5, 20 + swing);
-            ctx.fillStyle = '#b56f31'; // Capa estival rojiza
-            ctx.beginPath(); ctx.ellipse(-3, 1, 19, 12, 0, 0, Math.PI*2); ctx.fill();
-            // Espejo anal blanco (característico del corzo)
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(-21, 1, 4, 7, 0, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = '#9c5e26'; ctx.save(); ctx.rotate(-0.55); ctx.fillRect(8, -22, 9, 20); ctx.restore();
-            ctx.fillStyle = '#b56f31'; ctx.fillRect(12, -26, 13, 8); // Cabeza chata
-            // Orejas grandes de corzo
-            ctx.fillRect(10, -32, 4, 7);
-
-            // Pequeñas cuernas perladas oscuras con puntas
-            ctx.strokeStyle = '#2d241d'; ctx.lineWidth = 2.5; ctx.beginPath();
-            ctx.moveTo(13, -26); ctx.lineTo(11, -36); ctx.moveTo(15, -26); ctx.lineTo(16, -36); ctx.stroke();
-
-            ctx.fillStyle = '#b56f31';
-            ctx.fillRect(-6, 10, 4, 20 + swing); ctx.fillRect(12, 10, 4, 20 - swing);
-
-        } else if (this.type === 'muflon') {
-            // Muflón salvaje anatómico
-            ctx.fillStyle = '#26170c'; ctx.fillRect(-12, 12, 5, 18 - swing); ctx.fillRect(10, 12, 5, 18 + swing);
-            ctx.fillStyle = '#4d3019'; 
-            ctx.beginPath(); ctx.ellipse(-4, 2, 26, 19, 0, 0, Math.PI*2); ctx.fill();
-            
-            // Silla/Mancha blanca lateral súper fidedigna
-            ctx.fillStyle = '#ece5db'; ctx.beginPath(); ctx.ellipse(-4, -4, 13, 8, 0, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = '#382210'; ctx.save(); ctx.rotate(-0.4); ctx.fillRect(12, -14, 13, 20); ctx.restore();
-            ctx.fillRect(15, -19, 14, 12);
-            
-            // Grandes cuernos curvos estriados espiralados
-            ctx.strokeStyle = '#211c18'; ctx.lineWidth = 6.5; ctx.beginPath();
-            ctx.arc(14, -16, 14, Math.PI * 1.3, Math.PI * 0.4); ctx.stroke();
-            // Capa interna clara de hocico
-            ctx.fillStyle = '#fff'; ctx.fillRect(25, -15, 4, 5);
-
-            ctx.fillStyle = '#382210';
-            ctx.fillRect(-7, 12, 5.5, 18 + swing); ctx.fillRect(14, 12, 5.5, 18 - swing);
-
-        } else {
-            // Jabalí fotorrealista (Gran densidad de cerdas y amoladeras)
-            let isBig = (this.type === 'big_boar');
-            let baseColor = isBig ? '#1a120b' : '#332113';
-            
-            ctx.save();
-            // Dibujar volumen del cuerpo con sombreado interno
-            ctx.fillStyle = isBig ? '#0f0b07' : '#21150c';
-            ctx.fillRect(isBig?-18:-12, 11, 6, 16-swing); ctx.fillRect(isBig?10:6, 11, 6, 16+swing);
-            
-            // Escudo frontal pesado del jabalí
-            let boarGrad = ctx.createLinearGradient(-30, 0, 25, 0);
-            boarGrad.addColorStop(0, isBig ? '#241a10' : '#422c19');
-            boarGrad.addColorStop(0.6, isBig ? '#17100a' : '#2e1e11');
-            boarGrad.addColorStop(1, '#0b0805');
-            
-            ctx.translate(-2, 0);
-            drawAnimalHairTexture(ctx, isBig?68:42, isBig?42:28, boarGrad);
-            
-            // Cabeza cuneiforme masiva unida al tronco
-            ctx.fillStyle = isBig ? '#17100a' : '#2e1e11';
-            ctx.beginPath();
-            ctx.moveTo(10, -10); ctx.lineTo(isBig?38:24, 8); ctx.lineTo(16, 20); ctx.lineTo(-4, 16);
-            ctx.closePath(); ctx.fill();
-            
-            // Orejas pobladas y crines del lomo altas
-            ctx.fillStyle = '#050403';
-            ctx.fillRect(isBig?-24:-14, isBig?-25:-17, isBig?32:20, 5); // Crines erizadas
-            ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(14, -22); ctx.lineTo(17, -10); ctx.closePath(); ctx.fill(); // Oreja
-            
-            if (isBig) {
-                // Navajas/Amoladeras blancas relucientes de viejo macareno
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(28, 4, 3, 4);
+            if (!this.isFemale) {
+                // Cuerna ramificada realista de Venado Montero
+                ctx.strokeStyle = '#dfd5c6'; ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(20, -34); ctx.lineTo(12, -58); ctx.lineTo(0, -64);
+                ctx.moveTo(15, -45); ctx.lineTo(2, -50); ctx.moveTo(12, -55); ctx.lineTo(22, -64);
+                ctx.stroke();
             }
-
-            ctx.fillStyle = isBig ? '#17100a' : '#2e1e11';
-            ctx.fillRect(isBig?-12:-8, 11, 6.5, 17+swing); ctx.fillRect(isBig?14:10, 11, 6.5, 17-swing);
-            ctx.restore();
+            ctx.fillStyle = '#54381f'; ctx.fillRect(-10, 14, 5, 28 + swing); ctx.fillRect(19, 14, 5, 28 - swing);
+        } 
+        else if (this.type === 'corzo') {
+            // Corzo Estival
+            ctx.fillStyle = '#663b15'; ctx.fillRect(-8, 10, 4, 20 - swing); ctx.fillRect(8, 10, 4, 20 + swing);
+            ctx.fillStyle = '#a05c20'; ctx.beginPath(); ctx.ellipse(-3, 1, 18, 11, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(-19, 1, 4, 7, 0, 0, Math.PI*2); ctx.fill(); // Espejo anal puro
+            ctx.fillStyle = '#824b1a'; ctx.save(); ctx.rotate(-0.55); ctx.fillRect(8, -20, 8, 18); ctx.restore();
+            ctx.fillStyle = '#a05c20'; ctx.fillRect(11, -24, 12, 8);
+            ctx.fillStyle = '#222'; ctx.fillRect(9, -30, 3, 6); // Orejas sobredimensionadas
+            ctx.fillStyle = '#a05c20'; ctx.fillRect(-5, 10, 4, 20 + swing); ctx.fillRect(11, 10, 4, 20 - swing);
+        } 
+        else if (this.type === 'muflon') {
+            // Muflón Salvaje con Silla
+            ctx.fillStyle = '#21140b'; ctx.fillRect(-10, 11, 5, 18 - swing); ctx.fillRect(10, 11, 5, 18 + swing);
+            ctx.fillStyle = '#4a2f1b'; ctx.beginPath(); ctx.ellipse(-4, 2, 25, 18, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#f0e6df'; ctx.beginPath(); ctx.ellipse(-4, -2, 11, 8, 0, 0, Math.PI*2); ctx.fill(); // Silla o carona blanca
+            ctx.fillStyle = '#311e11'; ctx.save(); ctx.rotate(-0.4); ctx.fillRect(12, -12, 12, 18); ctx.restore();
+            ctx.fillRect(14, -18, 13, 11);
+            
+            if (!this.isFemale) {
+                // Grandes cuernos espiralados estriados
+                ctx.strokeStyle = '#1a1410'; ctx.lineWidth = 6; ctx.beginPath();
+                ctx.arc(12, -14, 13, Math.PI * 1.3, Math.PI * 0.4); ctx.stroke();
+            }
+            ctx.fillStyle = '#311e11'; ctx.fillRect(-6, 11, 5, 18 + swing); ctx.fillRect(13, 11, 5, 18 - swing);
+        } 
+        else if (this.type === 'pato') {
+            // Ánade Real (Modo Patos)
+            ctx.fillStyle = '#1c3144'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 10, 0, 0, Math.PI*2); ctx.fill(); // Cuerpo azulón
+            ctx.fillStyle = '#2b9348'; ctx.beginPath(); ctx.arc(12, -8, 6, 0, Math.PI*2); ctx.fill(); // Cabeza verde ánade
+            ctx.fillStyle = '#ffd166'; ctx.fillRect(16, -9, 6, 3); // Pico de pato
+            ctx.fillStyle = '#fff'; ctx.fillRect(5, -4, 8, 1); // Collar blanco blanco
+            // Alas batiendo dinámicamente con el ciclo
+            ctx.fillStyle = '#a2a2a2'; ctx.save(); ctx.translate(-2, -3); ctx.rotate(Math.sin(this.legCycle)*0.8); ctx.fillRect(-4, -12, 10, 12); ctx.restore();
+        }
+        else {
+            // Jabalí fotorrealista (big_boar / small_boar)
+            let isBig = (this.type === 'big_boar');
+            ctx.fillStyle = isBig ? '#110d0a' : '#261b13';
+            ctx.fillRect(isBig?-16:-10, 11, 6, 16-swing); ctx.fillRect(isBig?10:6, 11, 6, 16+swing);
+            
+            // Silueta ahusada del cochino
+            ctx.fillStyle = isBig ? '#1d1712' : '#3d2b1f';
+            ctx.beginPath(); ctx.ellipse(0, 0, isBig*10 + 26, isBig*6 + 18, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = isBig ? '#110d0a' : '#261b13';
+            ctx.beginPath(); ctx.moveTo(10, -8); ctx.lineTo(isBig?36:22, 6); ctx.lineTo(14, 18); ctx.closePath(); ctx.fill(); // jeta/hocico
+            
+            ctx.fillStyle = '#050403'; ctx.fillRect(isBig?-22:-12, isBig?-22:-15, isBig*10 + 18, 4); // Cerdas del lomo erizadas
+            if (isBig) { ctx.fillStyle = '#fff'; ctx.fillRect(24, 2, 3, 3); } // Navajas / Amoladeras
+            ctx.fillStyle = isBig ? '#110d0a' : '#261b13';
+            ctx.fillRect(isBig?-10:-6, 11, 6, 17+swing); ctx.fillRect(isBig?13:9, 11, 6, 17-swing);
         }
         ctx.restore();
     }
 }
 
-// --- SELECTOR DE APARICIÓN MONTERA ---
+// --- SELECTOR DE APARICIÓN DE PIEZAS (SPAWNER INTELIGENTE) ---
 function spawnGroup() {
-    PiaraAlerted = false;
+    if (!gameActive) return;
     const direction = Math.random() > 0.5 ? 1 : -1;
-    const baseSpeed = 0.5 + Math.random() * 0.75;
-    const yBase = Math.random() * 55;
-    const globalDice = Math.random();
+    const baseSpeed = 0.5 + Math.random() * 0.7;
+    const yBase = Math.random() * 45;
 
-    if (globalDice < 0.78) {
-        // Jabalíes y Bermejos predominantemente
-        const r = Math.random();
-        if (r < 0.22) {
-            entities.push(new Animal('big_boar', yBase, baseSpeed, direction));
-        } else {
-            const numSmall = 2 + Math.floor(Math.random() * 2);
-            let delayAccum = 0;
-            for(let i = 0; i < numSmall; i++) {
-                delayAccum += 75 + Math.random() * 55;
-                const type = Math.random() > 0.45 ? 'small_boar' : 'big_boar';
-                entities.push(new Animal(type, yBase + Math.random()*20, baseSpeed, direction, delayAccum));
-            }
-            if(Math.random() > 0.55) entities.push(new Animal('dog', yBase + 12, baseSpeed * 1.3, direction, delayAccum + 140));
-        }
+    // Obtener especies seleccionadas por el usuario
+    let pool = [];
+    if (mode === 'cortadero') {
+        if (activeSpecies.boar) pool.push('boar');
+        if (activeSpecies.ciervo) pool.push('ciervo');
+        if (activeSpecies.muflon) pool.push('muflon');
+        if (activeSpecies.corzo) pool.push('corzo');
     } else {
-        // Caza Mayor sorpresa infrecuente
-        const rareDice = Math.random();
-        if (rareDice < 0.40)      entities.push(new Animal('ciervo', yBase, baseSpeed * 0.95, direction));
-        else if (rareDice < 0.75) entities.push(new Animal('muflon', yBase, baseSpeed * 1.05, direction));
-        else                      entities.push(new Animal('corzo', yBase, baseSpeed * 1.15, direction));
+        pool.push('pato');
+    }
+
+    if (pool.length === 0) return;
+    let chosen = pool[Math.floor(Math.random() * pool.length)];
+
+    if (chosen === 'boar') {
+        totalSpawns++;
+        let r = Math.random();
+        if (r < 0.3) {
+            entities.push(new Animal('big_boar', yBase, baseSpeed, direction));
+            // Ocasionalmente meter un sabueso pisándole los talones
+            if (Math.random() > 0.5) {
+                totalSpawns++;
+                entities.push(new Animal('dog', yBase, baseSpeed, direction, 120));
+            }
+        } else {
+            let numSmall = 2 + Math.floor(Math.random() * 2);
+            let delayAccum = 0;
+            for(let i=0; i<numSmall; i++) {
+                totalSpawns++;
+                delayAccum += 60 + Math.random()*50;
+                entities.push(new Animal('small_boar', yBase + Math.random()*15, baseSpeed, direction, delayAccum));
+            }
+        }
+    } 
+    else if (chosen === 'ciervo') {
+        // Manada/Pelota de Venados: Un Macho dominante y varias hembras (ciervas) detras
+        totalSpawns++;
+        let macho = new Animal('ciervo', yBase, baseSpeed * 0.9, direction, 0, false);
+        entities.push(macho);
+        let numHembras = 1 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < numHembras; i++) {
+            totalSpawns++;
+            entities.push(new Animal('ciervo', yBase + 10 + i*6, baseSpeed * 0.9, direction, 0, true, macho));
+        }
+    } 
+    else if (chosen === 'muflon') {
+        // Pelota compacta de muflones corriendos juntos
+        totalSpawns++;
+        let lider = new Animal('muflon', yBase, baseSpeed * 1.05, direction, 0, false);
+        entities.push(lider);
+        for (let i = 0; i < 2; i++) {
+            totalSpawns++;
+            entities.push(new Animal('muflon', yBase + 8 + i*8, baseSpeed * 1.05, direction, 0, true, lider));
+        }
+    } 
+    else if (chosen === 'corzo') {
+        totalSpawns++;
+        entities.push(new Animal('corzo', yBase, baseSpeed * 1.2, direction));
+    }
+    else if (chosen === 'pato') {
+        // Parvada flotante de patos en el río
+        let numPatos = 2 + Math.floor(Math.random() * 3);
+        let d = 0;
+        for (let i = 0; i < numPatos; i++) {
+            totalSpawns++;
+            d += 40 + Math.random()*40;
+            entities.push(new Animal('pato', Math.random()*60, baseSpeed, direction, d));
+        }
     }
 }
 
 function createImpactParticles(x, y, type) {
-    const color = type === 'blood' ? '#660000' : '#8c7d67';
-    for(let i = 0; i < 18; i++) {
-        particles.push({ x: x, y: y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5-1.5, radius: 2.5+Math.random()*2.5, alpha: 1, color: color, life: 18+Math.random()*15 });
+    const color = type === 'blood' ? '#500000' : (mode === 'patos' ? '#a2c2cf' : '#736048');
+    for(let i = 0; i < 15; i++) {
+        particles.push({
+            x: x, y: y,
+            vx: (Math.random()-0.5)*4.5,
+            vy: (Math.random()-0.5)*4.5 - 1.2,
+            radius: 2 + Math.random()*2,
+            alpha: 1, color: color,
+            life: 15 + Math.random()*15
+        });
     }
 }
 
-// --- EJECUCIÓN DISPARO UNIFICADO ---
+// --- EJECUCIÓN DISPARO UNIFICADO (TIROS INFINITOS) ---
 function fire() {
-    if (!canShoot || isPaused) return;
+    if (!canShoot || isPaused || !gameActive) return;
+
+    canShoot = false;
+    lastShotTime = performance.now();
+    boltBar.classList.remove('ready');
 
     if (currentWeapon === 'rifle') {
-        canShoot = false;
-        lastShotTime = performance.now();
-        boltBar.classList.remove('ready');
-        recoilY = 46; 
+        playSound('rifle');
+        recoilY = -48; // Retroceso vertical violento hacia arriba
+        // Cola de ejecución secuencial para simular el rearme mecánico manual "chic-chic"
+        setTimeout(() => { playSound('bolt'); }, 400);
     } else {
-        // Escopeta Semiautomática de 3 Tiros
-        if (shotgunAmmo <= 0 || isShotgunReloading) return;
-        shotgunAmmo--;
-        canShoot = false;
-        lastShotTime = performance.now();
-        recoilY = 38; // Retroceso ligeramente más rápido pero seco
-        boltBar.classList.remove('ready');
+        playSound('shotgun');
+        recoilY = -35; // Retroceso de escopeta más plano
     }
 
     const shotX = crosshair.x;
@@ -488,265 +496,225 @@ function fire() {
 
     for (let ent of entities) {
         if (ent.dead || ent.type === 'dog') continue;
+        
+        // Adelanto balístico exacto según velocidad transversal del blanco
         const futureX = ent.x + (ent.currentSpeed * BULLET_FLIGHT_TIME * 60);
         if (shotX >= futureX && shotX <= futureX + ent.width && shotY >= ent.y && shotY <= ent.y + ent.height) {
             createImpactParticles(shotX, shotY, 'blood');
-            hitAnything = true; ent.dead = true; break;
+            hitAnything = true; ent.dead = true; totalKills++;
+            break;
         }
     }
     if (!hitAnything) createImpactParticles(shotX, shotY, 'dust');
-
-    // Forzar recarga automática si se vacía la semiautomática
-    if (currentWeapon === 'escopeta' && shotgunAmmo === 0) {
-        startShotgunReload();
-    }
 }
 
-function startShotgunReload() {
-    isShotgunReloading = true;
-    lastShotTime = performance.now();
-    boltBar.classList.remove('ready');
-}
-
-// --- MANEJO DE CONTROLES TÁCTILES ---
-let touchLastX = 0, touchLastY = 0;
-let isTouching = false;
+// --- SISTEMA DE ENTRADA TÁCTIL VERTICAL (TRACKPAD) ---
+let touchLastX = 0, touchLastY = 0, isTouching = false;
 
 function onTrackpadStart(e) {
-    if (isPaused) return;
-    e.preventDefault();
+    if (isPaused) return; e.preventDefault(); initAudio();
     if (!e.touches || e.touches.length === 0) return;
-    isTouching = true;
-    trackpad.classList.add('active');
-    touchLastX = e.touches[0].clientX;
-    touchLastY = e.touches[0].clientY;
+    isTouching = true; trackpad.classList.add('active');
+    touchLastX = e.touches[0].clientX; touchLastY = e.touches[0].clientY;
 }
-
 function onTrackpadMove(e) {
-    e.preventDefault();
-    if (!isTouching || isPaused || !e.touches || e.touches.length === 0) return;
+    e.preventDefault(); if (!isTouching || isPaused || !e.touches.length) return;
     const touch = e.touches[0];
-    
     crosshair.x += (touch.clientX - touchLastX) * TRACKPAD_SENSITIVITY;
     crosshair.y += (touch.clientY - touchLastY) * TRACKPAD_SENSITIVITY;
-    
-    touchLastX = touch.clientX;
-    touchLastY = touch.clientY;
+    touchLastX = touch.clientX; touchLastY = touch.clientY;
 }
-
 function onTrackpadEnd(e) {
-    e.preventDefault();
-    if (!isTouching || isPaused) return;
-    isTouching = false;
-    trackpad.classList.remove('active');
-    touchLastX = 0; touchLastY = 0;
-    
-    fire(); // Fuego al soltar el dedo
+    e.preventDefault(); if (!isTouching || isPaused) return;
+    isTouching = false; trackpad.classList.remove('active');
+    fire(); // Fuego al levantar el dedo
 }
 
 trackpad.addEventListener('touchstart', onTrackpadStart, {passive: false});
-trackpad.addEventListener('touchmove', onTrackpadMove, {passive: false});
+trackpad.addEventListener('touchmove', onTrackmove = onTrackpadMove, {passive: false});
 trackpad.addEventListener('touchend', onTrackpadEnd, {passive: false});
 
-// Ratón de PC
-trackpad.addEventListener('mousedown', (e) => { if(!isPaused) { isTouching = true; trackpad.classList.add('active'); } });
+// Soporte complementario para pruebas en ordenador (Ratón)
+trackpad.addEventListener('mousedown', (e) => { initAudio(); if(!isPaused) { isTouching = true; trackpad.classList.add('active'); } });
 trackpad.addEventListener('mousemove', (e) => {
-    if (isTouching && !isPaused) {
-        crosshair.x += e.movementX * TRACKPAD_SENSITIVITY;
-        crosshair.y += e.movementY * TRACKPAD_SENSITIVITY;
-    }
+    if (isTouching && !isPaused) { crosshair.x += e.movementX * TRACKPAD_SENSITIVITY; crosshair.y += e.movementY * TRACKPAD_SENSITIVITY; }
 });
-window.addEventListener('mouseup', () => {
-    if (isTouching && !isPaused) {
-        isTouching = false;
-        trackpad.classList.remove('active');
-        fire();
-    }
+window.addEventListener('mouseup', () => { if (isTouching && !isPaused) { isTouching = false; trackpad.classList.remove('active'); fire(); } });
+
+// --- GESTIÓN DE INTERFACES Y MENÚS ---
+document.getElementById('btnStart').addEventListener('click', () => {
+    initAudio(); document.getElementById('mainMenu').style.display = 'none'; resetGame();
+});
+document.getElementById('btnRestart').addEventListener('click', () => {
+    document.getElementById('resultsMenu').style.display = 'none'; resetGame();
+});
+document.getElementById('pauseBtn').addEventListener('click', () => {
+    isPaused = true; document.getElementById('pauseMenu').style.display = 'flex';
+});
+document.getElementById('btnResume').addEventListener('click', () => {
+    isPaused = false; document.getElementById('pauseMenu').style.display = 'none';
 });
 
-// --- SISTEMA DE MENÚ DE PAUSA ---
-pauseBtn.addEventListener('click', () => {
-    isPaused = true;
-    pauseMenu.style.display = 'flex';
+// Selectores de Armas
+document.getElementById('btnRifle').addEventListener('click', () => {
+    currentWeapon = 'rifle'; canShoot = true;
+    document.getElementById('btnRifle').classList.add('selected'); document.getElementById('btnEscopeta').classList.remove('selected');
+});
+document.getElementById('btnEscopeta').addEventListener('click', () => {
+    currentWeapon = 'escopeta'; canShoot = true;
+    document.getElementById('btnEscopeta').classList.add('selected'); document.getElementById('btnRifle').classList.remove('selected');
 });
 
-btnRifle.addEventListener('click', () => {
-    currentWeapon = 'rifle';
-    btnRifle.classList.add('selected');
-    btnEscopeta.classList.remove('selected');
+// Configuración de Modos de Escenario
+document.getElementById('btnModoCortadero').addEventListener('click', () => {
+    mode = 'cortadero'; document.getElementById('btnModoCortadero').classList.add('selected'); document.getElementById('btnModoPatos').classList.remove('selected');
+});
+document.getElementById('btnModoPatos').addEventListener('click', () => {
+    mode = 'patos'; document.getElementById('btnModoPatos').classList.add('selected'); document.getElementById('btnModoCortadero').classList.remove('selected');
 });
 
-btnEscopeta.addEventListener('click', () => {
-    currentWeapon = 'escopeta';
-    btnEscopeta.classList.add('selected');
-    btnRifle.classList.remove('selected');
-    if(shotgunAmmo === 0) shotgunAmmo = 3; // Reset seguro
-    isShotgunReloading = false;
-});
+// Toggles de selección de fauna
+function setupToggle(id, key) {
+    document.getElementById(id).addEventListener('click', function() {
+        activeSpecies[key] = !activeSpecies[key];
+        this.classList.toggle('selected', activeSpecies[key]);
+    });
+}
+setupToggle('cfgBoar', 'boar'); setupToggle('cfgCiervo', 'ciervo'); setupToggle('cfgMuflon', 'muflon'); setupToggle('cfgCorzo', 'corzo');
 
-btnResume.addEventListener('click', () => {
-    isPaused = false;
-    pauseMenu.style.display = 'none';
-    canShoot = true; 
-    recoilY = 0;
-});
+function resetGame() {
+    gameTimer = 30; totalKills = 0; totalSpawns = 0; entities = []; particles = [];
+    PiaraAlerted = false; isPaused = false; gameActive = true;
+    generateEnvironment();
+    lastSpawnTime = performance.now();
+}
 
-// --- LOOP PRINCIPAL RENDERIZADO ---
+function endGame() {
+    gameActive = false; isPaused = true;
+    document.getElementById('resultsMenu').style.display = 'flex';
+    document.getElementById('resDetails').innerHTML = `MODO JUGADO: ${mode === 'cortadero'?'Cortadero':'Ribera del Río'}<br><br>Piezas Avistadas: ${totalSpawns}<br>Piezas Cobradas: <span style="color:#4cd964; font-size:22px;">${totalKills}</span>`;
+}
+
+// --- LOOP PRINCIPAL DE RENDERIZADO (DELTA TIME ASÍNCRONO) ---
 let lastTime = 0;
 function loop(timestamp) {
     let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp;
 
-    if (!isPaused) {
-        // Reducción del golpe de retroceso
-        if (recoilY > 0) { recoilY -= dt * 250; if (recoilY < 0) recoilY = 0; }
+    if (!isPaused && gameActive) {
+        gameTimer -= dt;
+        document.getElementById('txtTiempo').innerText = `TIEMPO: ${Math.max(0, Math.ceil(gameTimer))}s`;
+        document.getElementById('txtKills').innerText = `RESES: ${totalKills}/${totalSpawns}`;
+        
+        if (gameTimer <= 0) { endGame(); }
 
-        // --- GESTIÓN DE TIEMPOS DE RECARGA Y GATILLO ---
+        // Reducción amortiguada del retroceso del cañón
+        if (recoilY < 0) { recoilY += dt * 190; if (recoilY > 0) recoilY = 0; }
+
+        // Temporizadores de rearme de la aguja percutora
+        let elapsed = timestamp - lastShotTime;
         if (currentWeapon === 'rifle') {
-            if (!canShoot) {
-                const progress = Math.min((timestamp - lastShotTime) / RIFLE_BOLT_TIME, 1);
-                boltBar.style.width = (progress * 100) + '%';
-                trackpad.innerHTML = `CERROJO RECARGANDO (${Math.round(progress*100)}%)<div id="boltBar" style="width:${progress*100}%" class="ready"></div>`;
-                if (progress >= 1) { canShoot = true; boltBar.classList.add('ready'); }
-            } else {
-                trackpad.innerHTML = `RIFLE ENCARADO (Aimpoint Listo)<div id="boltBar" style="width:100%" class="ready"></div>`;
-            }
+            let progress = Math.min(elapsed / RIFLE_BOLT_TIME, 1);
+            boltBar.style.width = (progress * 100) + '%';
+            if (progress >= 1) { canShoot = true; boltBar.classList.add('ready'); document.getElementById('trackpadLabel').innerText = "RIFLE ENCARADO (Aimpoint Listo)"; }
+            else { canShoot = false; boltBar.classList.remove('ready'); document.getElementById('trackpadLabel').innerText = "ACCIONANDO CERROJO MAUSER..."; }
         } else {
-            // Gestión Escopeta Semiautomática 3 Tiros
-            if (isShotgunReloading) {
-                const progress = Math.min((timestamp - lastShotTime) / SHOTGUN_RELOAD_TIME, 1);
-                boltBar.style.width = (progress * 100) + '%';
-                trackpad.innerHTML = `INTRODUCIENDO CARTUCHOS...<div id="boltBar" style="width:${progress*100}%"></div>`;
-                if (progress >= 1) {
-                    shotgunAmmo = 3;
-                    isShotgunReloading = false;
-                    canShoot = true;
-                }
-            } else if (!canShoot) {
-                const progress = Math.min((timestamp - lastShotTime) / SHOTGUN_FIRE_DELAY, 1);
-                trackpad.innerHTML = `SEMIAUTOMÁTICA: BALAS [${shotgunAmmo}/3]<div id="boltBar" style="width:${progress*100}%" class="ready"></div>`;
-                if (progress >= 1 && shotgunAmmo > 0) { canShoot = true; }
-            } else {
-                trackpad.innerHTML = `ESCOPETA SEMIAUTOMÁTICA LISTA [${shotgunAmmo}/3]<div id="boltBar" style="width:100%" class="ready"></div>`;
-            }
+            let progress = Math.min(elapsed / SHOTGUN_FIRE_DELAY, 1);
+            boltBar.style.width = (progress * 100) + '%';
+            if (progress >= 1) { canShoot = true; boltBar.classList.add('ready'); document.getElementById('trackpadLabel').innerText = "ESCOPETA SEMIAUTOMÁTICA LISTA"; }
+            else { canShoot = false; boltBar.classList.remove('ready'); document.getElementById('trackpadLabel').innerText = "CICLANDO CARTUCHO TRADICIONAL..."; }
         }
 
-        // Auto spawn
-        if (entities.length === 0 && timestamp - lastSpawnTime > 2200) { spawnGroup(); lastSpawnTime = timestamp; }
+        // Lanzador automático de oleadas
+        if (entities.length === 0 && timestamp - lastSpawnTime > 1500) { spawnGroup(); lastSpawnTime = timestamp; }
 
-        // Actualizar entidades
-        entities.forEach(ent => ent.update(dt));
+        entities.forEach(ent => ent.update(dt * 1000));
     }
 
-    // --- RENDER TEXTURAS ELEMENTOS DE PANTALLA ---
+    // --- PROCEDIMIENTO DE DIBUJO EN CANVAS ---
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Fondo: Pinos limpios
+    if (mode === 'cortadero') {
+        // FONDO RÚSTICO: Cielo de sierra y montañas lejanas
+        ctx.fillStyle = '#b8c0a0'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Cielo encapotado
+        ctx.fillStyle = '#4e5340'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.6); ctx.lineTo(canvas.width*0.3, canvas.height*0.25); ctx.lineTo(canvas.width*0.7, canvas.height*0.45); ctx.lineTo(canvas.width, canvas.height*0.2); ctx.lineTo(canvas.width, canvas.height*0.6); ctx.closePath(); ctx.fill(); // Macizo montañoso
+        
+        // Suelo del Cortadero (Monte bajo, jaras y tierra)
+        ctx.fillStyle = '#7a664d'; ctx.fillRect(0, canvas.height*0.5, canvas.width, canvas.height*0.5);
+        ctx.fillStyle = '#596144'; ctx.fillRect(0, canvas.height*0.5, canvas.width, 14); // Línea de vegetación del rastro
+    } else {
+        // ENTORNO RIBERA: Río de patos y cañaveral
+        ctx.fillStyle = '#a2c2cf'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Agua/Cielo claro
+        ctx.fillStyle = '#3a5a40'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.5); ctx.lineTo(canvas.width, canvas.height*0.42); ctx.lineTo(canvas.width, 0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill(); // Orilla lejana
+        // Agua del río en primer plano
+        ctx.fillStyle = '#283d3b'; ctx.fillRect(0, canvas.height*0.45, canvas.width, canvas.height*0.55);
+    }
+
+    // Dibujar pinos de fondo
     trees.filter(t => t.layer === 'back').forEach(t => {
-        ctx.fillStyle = t.trunkColor; ctx.fillRect(t.x, canvas.height * 0.1, t.width, canvas.height * 0.9);
-        ctx.fillStyle = '#1b2616'; ctx.beginPath(); ctx.moveTo(t.x - t.width*1.5, canvas.height * 0.40); ctx.lineTo(t.x + t.width / 2, canvas.height * 0.1); ctx.lineTo(t.x + t.width * 2.5, canvas.height * 0.40); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = t.trunkColor; ctx.fillRect(t.x, canvas.height * 0.15, t.width, canvas.height * 0.5);
     });
 
-    // Dibujar Animales fotorrealistas
+    // Pintar reses y fauna
     entities.forEach(ent => ent.draw());
 
-    // Árboles en primer plano
+    // Dibujar pinos en primer plano (Ocultación táctica del blanco)
     trees.filter(t => t.layer === 'front').forEach(t => {
-        ctx.fillStyle = t.trunkColor; ctx.fillRect(t.x, 0, t.width, canvas.height);
-        ctx.fillStyle = '#11170e'; ctx.beginPath(); ctx.moveTo(t.x - t.width * 2, canvas.height * 0.46); ctx.lineTo(t.x + t.width / 2, 0); ctx.lineTo(t.x + t.width * 3, canvas.height * 0.46); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = t.trunkColor; ctx.fillRect(t.x, 0, t.width, canvas.height * 0.9);
     });
 
-    // Partículas de sangre / polvo
+    // Físicas balísticas de las partículas flotantes
     if (!isPaused) {
-        particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.16; p.alpha = Math.max(0, p.life / 36); p.life--; ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
+        particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.alpha = Math.max(0, p.life / 30); p.life--; ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
         particles = particles.filter(p => p.life > 0);
     }
 
-    crosshair.x = Math.max(40, Math.min(canvas.width - 40, crosshair.x));
-    crosshair.y = Math.max(canvas.height * 0.18, Math.min(canvas.height * 0.65, crosshair.y));
+    // Límites estrictos para la cruz de puntería
+    crosshair.x = Math.max(20, Math.min(canvas.width - 20, crosshair.x));
+    crosshair.y = Math.max(canvas.height * 0.1, Math.min(canvas.height * 0.8, crosshair.y));
 
-    // =========================================================================
-    // --- RENDERIZADO DE ARMA SELECCIONADA CON SUS RESPECTIVAS MIRAS ---
-    // =========================================================================
+    // --- DISEÑO DE ARMAS (RECONSTRUIDAS PARA REALISMO PRO) ---
     ctx.save();
     let gunX = crosshair.x;
-    let gunY = crosshair.y - recoilY; 
-    let baseWidth = canvas.width * 0.22; 
-    let screenBottom = canvas.height;
+    let gunY = crosshair.y + recoilY; // Vector de desplazamiento del golpe de retroceso
+    let baseW = canvas.width * 0.24;
 
     if (currentWeapon === 'rifle') {
-        // --- ARMA 1: RIFLE DE CERROJO CON AIMPOINT TRANSLÚCIDO ---
-        let gradientCulata = ctx.createLinearGradient(gunX - baseWidth, screenBottom, gunX + baseWidth, screenBottom);
-        gradientCulata.addColorStop(0, '#804015'); gradientCulata.addColorStop(0.3, '#bd631e'); gradientCulata.addColorStop(0.7, '#cc6c23'); gradientCulata.addColorStop(1, '#663310');
-        ctx.fillStyle = gradientCulata; ctx.beginPath();
-        ctx.moveTo(canvas.width / 2 - baseWidth + (gunX - canvas.width/2)*0.4, screenBottom); ctx.lineTo(canvas.width / 2 + baseWidth + (gunX - canvas.width/2)*0.4, screenBottom);
-        ctx.lineTo(gunX + 22, gunY + 110); ctx.lineTo(gunX - 22, gunY + 110); ctx.closePath(); ctx.fill();
-
-        ctx.fillStyle = '#16191c'; ctx.beginPath(); ctx.moveTo(gunX - 18, gunY + 110); ctx.lineTo(gunX + 18, gunY + 110); ctx.lineTo(gunX + 12, gunY + 45); ctx.lineTo(gunX - 12, gunY + 45); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#0a0b0d'; ctx.fillRect(gunX - 6, gunY + 45, 12, 60);
-
-        ctx.fillStyle = '#1c1f22'; ctx.fillRect(gunX - 16, gunY + 28, 32, 18);
-        ctx.fillStyle = '#2d3238'; ctx.fillRect(gunX + 15, gunY + 32, 6, 10);
-
-        // Lente Inferior (Cristal con tratamiento antirreflejos azulado de alta gama)
-        ctx.fillStyle = 'rgba(160, 210, 255, 0.16)'; 
-        ctx.beginPath(); ctx.arc(gunX, gunY + 5, 38, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#121416'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 38, 0, Math.PI * 2); ctx.stroke();
-
-        // Tubo Superior de Protección de la foto (Ultra transparente)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)'; 
-        ctx.beginPath(); ctx.arc(gunX, gunY - 48, 28, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#1c1f22'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(gunX, gunY - 48, 28, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#1c1f22'; ctx.fillRect(gunX - 12, gunY - 26, 24, 12);
-
-        // Retícula Aimpoint: Punto Rojo Brillante Central
-        ctx.fillStyle = '#ff1a1a'; ctx.shadowBlur = 14; ctx.shadowColor = '#ff0000';
-        ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 3.5, 0, Math.PI * 2); ctx.fill();
-
-    } else {
-        // --- ARMA 2: ESCOPETA SEMIAUTOMÁTICA APUNTANDO CON PUNTO DE MIRA DE LATÓN ---
-        // Dibujo en perspectiva del lomo del cañón largo pavonado
-        let escopetaGrad = ctx.createLinearGradient(gunX - 25, screenBottom, gunX + 25, screenBottom);
-        escopetaGrad.addColorStop(0, '#1c1f22'); escopetaGrad.addColorStop(0.5, '#343a40'); escopetaGrad.addColorStop(1, '#121415');
+        // RIFLE CON EMBLEMA AIMPOINT HOLOGRÁFICO
+        ctx.fillStyle = '#21150b'; ctx.beginPath(); // Culata sintética/madera oscura
+        ctx.moveTo(canvas.width/2 - baseW + (gunX - canvas.width/2)*0.35, canvas.height); ctx.lineTo(canvas.width/2 + baseW + (gunX - canvas.width/2)*0.35, canvas.height);
+        ctx.lineTo(gunX + 24, gunY + 100); ctx.lineTo(gunX - 24, gunY + 100); ctx.closePath(); ctx.fill();
         
-        // Báscula / Recámara baja de la repetidora
-        ctx.fillStyle = escopetaGrad;
-        ctx.beginPath();
-        ctx.moveTo(canvas.width / 2 - baseWidth*0.7 + (gunX - canvas.width/2)*0.3, screenBottom);
-        ctx.lineTo(canvas.width / 2 + baseWidth*0.7 + (gunX - canvas.width/2)*0.3, screenBottom);
-        ctx.lineTo(gunX + 16, gunY + 60);
-        ctx.lineTo(gunX - 16, gunY + 60);
-        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#1c1f22'; ctx.fillRect(gunX - 14, gunY + 45, 28, 55); // Cuerpo del visor tubo exterior
+        ctx.fillStyle = 'rgba(100, 180, 255, 0.2)'; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 36, 0, Math.PI*2); ctx.fill(); // Cristal de la Óptica
+        ctx.strokeStyle = '#111'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 36, 0, Math.PI*2); ctx.stroke(); // Bisel exterior
 
-        // Cañón Cilíndrico que converge de forma fotorrealista hacia el punto de impacto
-        let canonGrad = ctx.createLinearGradient(gunX - 12, gunY + 60, gunX + 12, gunY + 60);
-        canonGrad.addColorStop(0, '#212529'); canonGrad.addColorStop(0.5, '#495057'); canonGrad.addColorStop(1, '#111214');
-        ctx.fillStyle = canonGrad;
-        ctx.beginPath();
-        ctx.moveTo(gunX - 15, gunY + 60); ctx.lineTo(gunX + 15, gunY + 60);
-        ctx.lineTo(gunX + 5, gunY);     ctx.lineTo(gunX - 5, gunY); // El final del cañón muere justo debajo de la cruz
-        ctx.closePath(); ctx.fill();
+        // Punto Rojo central reflectante (Holograma Aimpoint de caza)
+        ctx.fillStyle = '#ff1a1a'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 3, 0, Math.PI*2); ctx.fill();
+    } else {
+        // ESCOPETA CLÁSICA DE REPETICIÓN CON MADERA DE NOGAL VETEADA
+        let woodGrad = ctx.createLinearGradient(gunX - 25, canvas.height, gunX + 25, canvas.height);
+        woodGrad.addColorStop(0, '#543115'); woodGrad.addColorStop(0.5, '#7c4b24'); woodGrad.addColorStop(1, '#3b220e');
+        ctx.fillStyle = woodGrad; ctx.beginPath();
+        ctx.moveTo(canvas.width/2 - baseW*0.6 + (gunX - canvas.width/2)*0.3, canvas.height); ctx.lineTo(canvas.width/2 + baseW*0.6 + (gunX - canvas.width/2)*0.3, canvas.height);
+        ctx.lineTo(gunX + 15, gunY + 70); ctx.lineTo(gunX - 15, gunY + 70); ctx.closePath(); ctx.fill();
 
-        // Solera rayada superior del cañón (Guía de puntería de escopeta)
-        ctx.fillStyle = '#0f1112';
-        ctx.beginPath();
-        ctx.moveTo(gunX - 3, gunY + 60); ctx.lineTo(gunX + 3, gunY + 60);
-        ctx.lineTo(gunX + 1, gunY); ctx.lineTo(gunX - 1, gunY);
-        ctx.closePath(); ctx.fill();
+        // Cañón largo pavonado de caza menor/mayor
+        let metalGrad = ctx.createLinearGradient(gunX - 10, gunY + 70, gunX + 10, gunY + 70);
+        metalGrad.addColorStop(0, '#212529'); metalGrad.addColorStop(0.5, '#495057'); metalGrad.addColorStop(1, '#111214');
+        ctx.fillStyle = metalGrad; ctx.beginPath();
+        ctx.moveTo(gunX - 12, gunY + 70); ctx.lineTo(gunX + 12, gunY + 70); ctx.lineTo(gunX + 4, gunY); ctx.lineTo(gunX - 4, gunY); ctx.closePath(); ctx.fill();
 
-        // EL PUNTO DE MIRA DE LATÓN REALISTA (Punto dorado tradicional en la punta del cañón)
-        ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 8; ctx.shadowColor = '#d47320';
-        ctx.beginPath();
-        // Coincide milimétricamente con las coordenadas del crosshair original de impacto para un disparo perfecto
-        ctx.arc(crosshair.x, crosshair.y, 3, 0, Math.PI * 2); 
-        ctx.fill();
+        // Solista superior ventilada y punto de mira tradicional de latón (dorado)
+        ctx.fillStyle = '#0f1112'; ctx.fillRect(gunX - 1.5, gunY, 3, 70);
+        ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 3, 0, Math.PI*2); ctx.fill();
     }
     ctx.restore();
-    // =========================================================================
 
-    // Limpieza inteligente de memoria de animales fuera de rango o abatidos
-    entities = entities.filter(ent => !((ent.direction === -1 && ent.x < -180) || (ent.direction === 1 && ent.x > canvas.width + 180) || (ent.dead && ent.deathTimer > 1800)));
+    // Limpieza de memoria e instancias fuera de margen
+    entities = entities.filter(ent => !((ent.direction === -1 && ent.x < -200) || (ent.direction === 1 && ent.x > canvas.width + 200) || (ent.dead && ent.deathTimer > 1500)));
     requestAnimationFrame(loop);
 }
+
 requestAnimationFrame(loop);
 </script>
 </body>
