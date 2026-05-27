@@ -3,40 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Montero Pro 3D Simulator</title>
+    <title>Montero Realista 3D - Balística Avanzada</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #0c0f0a; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #050804; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
         #gameContainer { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-        canvas { width: 100%; height: 60%; background: #1a2416; display: block; }
+        canvas { width: 100%; height: 60%; background: #141a10; display: block; }
         
         /* Trackpad inferior táctil */
-        #trackpad { width: 100%; height: 40%; background: linear-gradient(135deg, #1f140a, #0d0805); border-top: 4px solid #3a2612; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; text-align: center; padding: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
-        #trackpad.active { background: linear-gradient(135deg, #2d1e11, #140d08); }
+        #trackpad { width: 100%; height: 40%; background: linear-gradient(135deg, #1a120b, #080503); border-top: 4px solid #2b1c0e; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; text-align: center; padding: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+        #trackpad.active { background: linear-gradient(135deg, #24190f, #0d0805); }
         
-        #boltBar { position: absolute; top: 0; left: 0; height: 6px; background: #ff3b30; width: 100%; transition: width 0.1s linear; }
-        #boltBar.ready { background: #4cd964; }
+        #cadenceBar { position: absolute; top: 0; left: 0; height: 6px; background: #ff3b30; width: 100%; transition: width 0.05s linear; }
+        #cadenceBar.ready { background: #4cd964; }
 
-        /* Interfaces superpuestas */
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,8,5,0.92); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 25px; text-align: center; }
-        .menu-card { background: #161c14; border: 3px solid #4a3b2c; padding: 20px; border-radius: 12px; width: 100%; max-width: 360px; box-shadow: 0 0 25px rgba(0,0,0,0.8); }
+        /* Interfaces */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3,5,3,0.94); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 25px; text-align: center; }
+        .menu-card { background: #11140f; border: 2px solid #3d3224; padding: 20px; border-radius: 12px; width: 100%; max-width: 360px; box-shadow: 0 0 25px rgba(0,0,0,0.9); }
         
-        h1 { color: #c2996b; font-size: 22px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 4px #000; }
-        h3 { color: #8a9685; font-size: 13px; margin: 15px 0 6px 0; text-align: left; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { color: #b89063; font-size: 20px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 4px #000; }
+        h3 { color: #768071; font-size: 12px; margin: 12px 0 6px 0; text-align: left; text-transform: uppercase; letter-spacing: 1px; }
         
-        button { background: #332212; color: #e6dfd5; border: 2px solid #543920; padding: 12px 18px; font-size: 13px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; margin: 6px 0; text-transform: uppercase; transition: all 0.15s ease; }
-        button:active, button.selected { background: #c2996b; color: #111; border-color: #fff; box-shadow: 0 0 10px rgba(194,153,107,0.5); }
-        button:disabled { background: #222 !important; color: #555 !important; border-color: #333 !important; cursor: not-allowed; }
+        button { background: #24180d; color: #ded8ce; border: 2px solid #422d1a; padding: 11px 16px; font-size: 12px; font-family: inherit; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; margin: 5px 0; text-transform: uppercase; transition: all 0.1s ease; }
+        button:active, button.selected { background: #b89063; color: #111; border-color: #fff; box-shadow: 0 0 10px rgba(184,144,99,0.4); }
         
         .selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .selector-grid button { font-size: 11px; padding: 9px; margin: 0; }
+        .selector-grid button { font-size: 11px; padding: 8px; margin: 0; }
         
-        /* HUD de Juego */
-        #hud { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; z-index: 5; pointer-events: none; font-size: 13px; font-weight: bold; text-shadow: 2px 2px 4px #000; color: #f0eae1; }
+        /* HUD superior */
+        #hud { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; z-index: 5; pointer-events: none; font-size: 12px; font-weight: bold; text-shadow: 2px 2px 4px #000; color: #ede8df; }
         
         .top-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 6; }
-        .ctrl-btn { width: 38px; height: 38px; padding: 0; margin: 0; border-radius: 50%; background: rgba(51,34,18,0.75); display: flex; justify-content: center; align-items: center; font-size: 16px; }
+        .ctrl-btn { width: 36px; height: 36px; padding: 0; margin: 0; border-radius: 50%; background: rgba(36,24,13,0.8); display: flex; justify-content: center; align-items: center; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -48,38 +47,38 @@
     </div>
     
     <div class="top-controls">
-        <button id="btnHome" class="ctrl-btn" title="Menú Principal">🏠</button>
+        <button id="btnHome" class="ctrl-btn">🏠</button>
         <button id="pauseBtn" class="ctrl-btn">⏸</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <div id="trackpad">
-        <div id="boltBar"></div>
-        <span id="trackpadLabel">INICIALIZANDO LENTES ÓPTICAS...</span>
+        <div id="cadenceBar"></div>
+        <span id="trackpadLabel">SISTEMA EN ADQUISICIÓN...</span>
     </div>
 
     <div id="mainMenu" class="overlay">
         <div class="menu-card">
-            <h1>MONTERÍA PRO 3D</h1>
-            <p style="font-size: 11px; color:#6a7566; margin-bottom: 12px;">Simulador Avanzado Balístico de Ojeo</p>
+            <h1>MONTERÍA REALISTA 3D</h1>
+            <p style="font-size: 11px; color:#5c6358; margin-bottom: 12px;">Físicas de Adelanto y Plomeo de Escopeta</p>
             
-            <h3>ENTORNO DE CAZA</h3>
+            <h3>MODALIDAD</h3>
             <div class="selector-grid">
                 <button id="btnModoCortadero" class="selected">Monte / Cortadero</button>
                 <button id="btnModoPatos">Ribera / Patos</button>
             </div>
 
             <div id="panelArmasMonte">
-                <h3>ARMA DISPONIBLE</h3>
+                <h3>OPCIÓN DE ARMA</h3>
                 <div class="selector-grid">
-                    <button id="btnRifleMenu" class="selected">Rifle Cerrojo</button>
+                    <button id="btnRifleMenu" class="selected">Rifle Continuo</button>
                     <button id="btnEscopetaMenu">Semiautomática</button>
                 </div>
             </div>
 
             <div id="panelEspecies">
-                <h3>FAUNA COMPATIBLE</h3>
+                <h3>ESPECIES DE MONTE</h3>
                 <div class="selector-grid">
                     <button id="cfgBoar" class="selected">Jabalí</button>
                     <button id="cfgCiervo" class="selected">Venado</button>
@@ -88,110 +87,90 @@
                 </div>
             </div>
 
-            <button id="btnStart" style="background:#3e5433; border-color:#5c7a4c; margin-top:18px; font-size:15px; color:#fff;">Ocupar Puesto</button>
+            <button id="btnStart" style="background:#2e3d27; border-color:#44593a; margin-top:15px; font-size:14px; color:#fff;">Entrar al Puesto</button>
         </div>
     </div>
 
     <div id="resultsMenu" class="overlay" style="display:none;">
         <div class="menu-card">
-            <h1>FIN DE LA TIRADA</h1>
-            <p id="resDetails" style="margin: 18px 0; font-size: 14px; line-height: 1.7; color: #b8c2b5;"></p>
-            <button id="btnRestart" style="background:#3e5433;">Doblar otra mano</button>
+            <h1>PLANTILLA DE COBROS</h1>
+            <p id="resDetails" style="margin: 15px 0; font-size: 13px; line-height: 1.6; color: #a9b5a6;"></p>
+            <button id="btnRestart" style="background:#2e3d27;">Doblar Puesto</button>
         </div>
     </div>
 
     <div id="pauseMenu" class="overlay" style="display:none;">
         <div class="menu-card">
-            <h1>ENTRETIEMPO</h1>
+            <h1>MANO SUSPENDIDA</h1>
             <div id="panelArmasPausa">
-                <h3>MODIFICAR ENCARGO</h3>
-                <button id="btnRifle" class="selected">Rifle (Aimpoint)</button>
+                <h3>CAMBIO DE ARMA</h3>
+                <button id="btnRifle" class="selected">Rifle de Caza</button>
                 <button id="btnEscopeta">Semiautomática Madera</button>
             </div>
-            <p id="lblAvisoPatos" style="display:none; font-size:11px; color:#c94c4c; margin: 10px 0;">* En el río solo se permite el uso de escopeta.</p>
-            <hr style="border:1px solid #2d3829; margin:15px 0;">
-            <button id="btnResume" style="background:#5c7a4c; color:#fff;">Quitar Seguro</button>
+            <p id="lblAvisoPatos" style="display:none; font-size:11px; color:#bd4242; margin: 10px 0;">* En río solo se permite perdigón y escopeta.</p>
+            <hr style="border:1px solid #232920; margin:12px 0;">
+            <button id="btnResume" style="background:#44593a; color:#fff;">Quitar Seguro</button>
         </div>
     </div>
 </div>
 
 <script>
-// --- MOTOR DE AUDIO SINTÉTICO BALÍSTICO ---
+// --- MOTOR SINTÉTICO DE AUDIO REALISTA ---
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
-
 function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
 
 function playSound(type) {
     if (!audioCtx) return;
     const now = audioCtx.currentTime;
-    
-    if (type === 'shotgun') {
-        let bufferSize = audioCtx.sampleRate * 0.45, buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = buffer.getChannelData(0);
+    if (type === 'shotgun' || type === 'rifle') {
+        let isRifle = type === 'rifle';
+        let bufferSize = audioCtx.sampleRate * (isRifle ? 0.6 : 0.45), buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
         let noise = audioCtx.createBufferSource(); noise.buffer = buffer;
-        let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(380, now);
-        filter.frequency.exponentialRampToValueAtTime(20, now + 0.28);
-        let gain = audioCtx.createGain(); gain.gain.setValueAtTime(1.6, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        let filter = audioCtx.createBiquadFilter(); filter.type = isRifle ? 'bandpass' : 'lowpass'; filter.frequency.setValueAtTime(isRifle ? 500 : 350, now);
+        let gain = audioCtx.createGain(); gain.gain.setValueAtTime(isRifle ? 2.0 : 1.7, now); gain.gain.exponentialRampToValueAtTime(0.001, now + (isRifle ? 0.5 : 0.35));
         noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); noise.start(now);
-    } 
-    else if (type === 'rifle') {
-        let bufferSize = audioCtx.sampleRate * 0.55, buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        let noise = audioCtx.createBufferSource(); noise.buffer = buffer;
-        let filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.setValueAtTime(550, now);
-        let gain = audioCtx.createGain(); gain.gain.setValueAtTime(1.9, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); noise.start(now);
-    } 
-    else if (type === 'bolt') {
-        let osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'triangle'; osc.frequency.setValueAtTime(950, now);
-        gain.gain.setValueAtTime(0.08, now); gain.gain.setValueAtTime(0, now + 0.04);
-        gain.gain.setValueAtTime(0.08, now + 0.12); gain.gain.setValueAtTime(0, now + 0.20);
-        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.25);
     }
 }
 
-// --- CORE DEL SIMULADOR ---
+// --- VARIABLES MAESTRAS Y CONFIGURACIÓN ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const trackpad = document.getElementById('trackpad');
-const boltBar = document.getElementById('boltBar');
+const cadenceBar = document.getElementById('cadenceBar');
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight * 0.6;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight * 0.6; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
 let isPaused = true, gameTimer = 45, totalSpawns = 0, totalKills = 0, lastSpawnTime = 0, gameActive = false;
 let currentWeapon = 'rifle', canShoot = true, lastShotTime = 0, recoilY = 0;
 let PiaraAlerted = false, entities = [], particles = [], bushes = [];
 let crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
 
-// Ajustes del Simulador
-const RIFLE_BOLT_TIME = 1300, SHOTGUN_FIRE_DELAY = 500, BULLET_FLIGHT_TIME = 0.03, TRACKPAD_SENSITIVITY = 1.7;
+// Parámetros Balísticos Modificados
+const FIRE_DELAY = 450; 
+const RIFLE_BULLET_FLIGHT_TIME = 0.28; // Retardo real (en segundos) que obliga a adelantar el tiro en piezas lejanas
+const SHOTGUN_RADIUS = 85;             // Radio amplio de dispersión de perdigones para patos
+const TRACKPAD_SENSITIVITY = 1.65;
 let mode = 'cortadero'; 
 let activeSpecies = { boar: true, ciervo: true, muflon: true, corzo: true };
 
-// --- PROYECCIÓN DE ESCENARIO Y PARALAJE ---
 function generateEnvironment() {
     bushes = [];
-    let numBushes = mode === 'cortadero' ? 22 : 12;
+    let numBushes = mode === 'cortadero' ? 24 : 12;
     for (let i = 0; i < numBushes; i++) {
         bushes.push({
             x: Math.random() * canvas.width,
-            y: canvas.height * (0.45 + Math.random() * 0.35),
-            radius: 15 + Math.random() * 25,
-            color: `rgb(${35 + Math.random()*15}, ${50 + Math.random()*20}, ${25 + Math.random()*10})`
+            y: canvas.height * (0.46 + Math.random() * 0.36),
+            radius: 12 + Math.random() * 22,
+            color: `rgb(${40 + Math.random()*15}, ${55 + Math.random()*15}, ${28 + Math.random()*10})`
         });
     }
-    // Ordenar por profundidad para el algoritmo del pintor
     bushes.sort((a, b) => a.y - b.y);
 }
 
-// --- MOTOR DE RENDERING 3D CON SOMBREADO VOLUMÉTRICO DE ANIMALES ---
+// --- MOTOR DE ANIMALES CON INTEGRACIÓN DE CAÍDA BALÍSTICA Y FLOTACIÓN ---
 class Animal {
     constructor(type, speed, direction, delay = 0, isFemale = false, packLeader = null) {
         this.type = type;
@@ -199,168 +178,204 @@ class Animal {
         this.isFemale = isFemale;
         this.packLeader = packLeader;
 
-        // Regla Balística: Escala y Factor de Lejanía según el arma equipada
         if (type === 'pato') {
-            this.zDepth = 1.0; // Plano intermedio en el río
-            this.scaleFactor = 0.65;
+            this.zDepth = 0.9; this.scaleFactor = 0.65;
         } else {
-            // El rifle aleja las piezas al horizonte (Z alto). La escopeta te mete encima en el cortadero
-            this.zDepth = currentWeapon === 'rifle' ? 0.45 : 1.1; 
+            this.zDepth = currentWeapon === 'rifle' ? 0.38 : 1.05;
             this.scaleFactor = this.zDepth;
         }
 
-        // Corrección de velocidad: Corzos más lentos que antes para asegurar el lance
-        this.baseSpeed = (type === 'corzo') ? 2.5 : (3.5 + speed * 2);
-        if (currentWeapon === 'rifle') this.baseSpeed *= 1.3; // Compensar la lejanía visual en el horizonte
+        // Velocidad base al paso/trote tranquilo
+        if (type === 'corzo') {
+            this.baseSpeed = 1.45;
+        } else if (type === 'pato') {
+            this.baseSpeed = 2.4;
+        } else {
+            this.baseSpeed = 0.75 + speed * 0.4;
+        }
+
+        if (currentWeapon === 'rifle' && type !== 'pato') {
+            this.baseSpeed *= 0.65; 
+        }
 
         this.currentSpeed = this.baseSpeed * direction;
 
-        // Dimensiones maestras de las mallas pseudo-3D
-        if (type === 'big_boar')       { this.w = 76; this.h = 50; }
-        else if (type === 'small_boar') { this.w = 42; this.h = 28; }
-        else if (type === 'ciervo')     { this.w = 90; this.h = 80; }
-        else if (type === 'corzo')      { this.w = 46; this.h = 42; }
-        else if (type === 'muflon')     { this.w = 70; this.h = 52; }
-        else if (type === 'pato')       { this.w = 38; this.h = 26; }
+        if (type === 'big_boar')       { this.w = 80; this.h = 48; }
+        else if (type === 'small_boar') { this.w = 44; this.h = 26; }
+        else if (type === 'ciervo')     { this.w = 100; this.h = 85; }
+        else if (type === 'corzo')      { this.w = 50; this.h = 45; }
+        else if (type === 'muflon')     { this.w = 72; this.h = 50; }
+        else if (type === 'pato')       { this.w = 38; this.h = 24; }
 
-        // Aplicar la escala tridimensional a las cajas de colisión físicas
         this.width = this.w * this.scaleFactor;
         this.height = this.h * this.scaleFactor;
-
         this.x = direction === 1 ? -this.width - delay : canvas.width + delay;
         
-        // Colocación en el eje vertical Y con corrección de perspectiva
         if (type === 'pato') {
-            this.y = canvas.height * 0.22 + (Math.random() * 40);
+            this.y = canvas.height * 0.15 + (Math.random() * 30);
         } else {
-            this.y = currentWeapon === 'rifle' ? (canvas.height * 0.44) : (canvas.height * 0.54 + Math.random() * 30);
+            this.y = currentWeapon === 'rifle' ? (canvas.height * 0.44 + (Math.random()*15)) : (canvas.height * 0.54 + Math.random() * 25);
         }
 
         this.dead = false; this.deathTimer = 0; this.angle = 0; this.legCycle = 0;
-        
-        // Variabilidad genética de trofeo en venados machos
-        this.antlerSize = isFemale ? 0 : (0.6 + Math.random() * 0.7); 
+        this.antlerSize = isFemale ? 0 : (0.7 + Math.random() * 0.6); 
+
+        // Nuevas físicas de caída
+        this.vy = 0; 
+        this.isFloating = false;
+        this.waterLevel = canvas.height * 0.46 + (Math.random() * 30); // Línea de flotación en el río
     }
 
     update(dt) {
+        const step = dt / 16.66;
+
         if (this.dead) {
             this.deathTimer += dt;
-            if (this.angle < Math.PI / 2) this.angle += 0.2;
+            if (this.type === 'pato') {
+                if (!this.isFloating) {
+                    // Gravedad real cayendo al agua
+                    this.vy += 0.35 * step;
+                    this.y += this.vy * step;
+                    this.x += this.currentSpeed * 0.25 * step; // Conserva un poco de inercia de vuelo
+                    if (this.angle < Math.PI) this.angle += 0.15 * step;
+
+                    // Detectar impacto con la superficie del río
+                    if (this.y >= this.waterLevel) {
+                        this.y = this.waterLevel;
+                        this.isFloating = true;
+                        this.vy = 0;
+                    }
+                } else {
+                    // Estado flotando: es arrastrado lentamente por la corriente del río
+                    this.x += 0.4 * step; // Deriva suave hacia la derecha
+                    this.y += Math.sin(performance.now() * 0.005) * 0.1; // Leve balanceo en el agua
+                }
+            } else {
+                // Caída estándar para animales de tierra
+                if (this.angle < Math.PI / 2) this.angle += 0.22 * step;
+            }
             return;
         }
 
-        // Lógica de seguimiento de la pelota/manada
         if (this.packLeader && !this.packLeader.dead) {
-            this.x = this.packLeader.x - (35 * this.direction * this.scaleFactor);
-            this.y = this.packLeader.y + (5 * (this.isFemale ? 1 : -1));
+            this.x = this.packLeader.x - (40 * this.direction * this.scaleFactor);
+            this.y = this.packLeader.y + (6 * (this.isFemale ? 1 : -1));
             this.currentSpeed = this.packLeader.currentSpeed;
         }
 
+        // Estampida instantánea por el estruendo del disparo
         if (PiaraAlerted && this.type !== 'pato') {
-            // Aceleración controlada de estampida
-            this.currentSpeed = this.baseSpeed * 1.55 * this.direction;
+            let panicMultiplier = this.type === 'corzo' ? 2.6 : 2.2;
+            this.currentSpeed = this.baseSpeed * panicMultiplier * this.direction;
         }
 
-        const step = dt / 16.66;
         this.x += this.currentSpeed * step;
-        this.legCycle += Math.abs(this.currentSpeed) * 0.2 * step;
+        this.legCycle += Math.abs(this.currentSpeed === 0 ? 0.5 : this.currentSpeed) * 0.24 * step;
     }
 
     draw() {
         ctx.save();
         ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
         ctx.rotate(this.angle);
-        if (this.direction === -1) ctx.scale(-1, 1);
+        if (this.direction === -1 && !this.isFloating) ctx.scale(-1, 1);
 
-        let swing = Math.sin(this.legCycle) * 8;
-        let s = this.scaleFactor; // Atajo del multiplicador 3D
+        let swing = this.dead ? 0 : Math.sin(this.legCycle) * 7;
+        let s = this.scaleFactor;
 
-        // IMPLEMENTACIÓN DEL MOTOR DE RENDER GRÁFICO CON TRATAMIENTO 3D VOLUMÉTRICO
         if (this.type === 'ciervo') {
-            // Extremidades con proyección de sombra propia
-            ctx.fillStyle = '#2f1e12'; ctx.fillRect(-12*s, 10*s, 4*s, 26*s - swing); ctx.fillRect(10*s, 10*s, 4*s, 26*s + swing);
+            ctx.fillStyle = '#26190e'; 
+            ctx.fillRect(-10*s, 12*s, 3*s, 32*s - swing); ctx.fillRect(14*s, 12*s, 3*s, 32*s + swing);
+            ctx.fillRect(-5*s, 12*s, 3*s, 32*s + swing); ctx.fillRect(19*s, 12*s, 3*s, 32*s - swing);
             
-            // Tronco y costillar con esferas sombreadas degradadas (Efecto 3D Realista)
-            let body3D = ctx.createRadialGradient(-4*s, -2*s, 5*s, -2*s, 2*s, 28*s);
-            body3D.addColorStop(0, '#855933'); body3D.addColorStop(0.8, '#593a20'); body3D.addColorStop(1, '#2d1d10');
-            ctx.fillStyle = body3D; ctx.beginPath(); ctx.ellipse(-2*s, 0, 32*s, 15*s, 0, 0, Math.PI*2); ctx.fill();
+            let bodyGrad = ctx.createRadialGradient(-3*s, -4*s, 4*s, -1*s, 0, 32*s);
+            bodyGrad.addColorStop(0, '#80542d'); bodyGrad.addColorStop(0.7, '#59381b'); bodyGrad.addColorStop(1, '#2e1c0c');
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.moveTo(-34*s, -4*s); ctx.quadraticCurveTo(-15*s, -18*s, 4*s, -10*s);
+            ctx.lineTo(24*s, -6*s); ctx.lineTo(20*s, 14*s); ctx.lineTo(-26*s, 14*s); ctx.closePath(); ctx.fill();
 
-            // Espejo Anal Blanco
-            ctx.fillStyle = '#fff7ed'; ctx.beginPath(); ctx.ellipse(-32*s, -1*s, 4*s, 8*s, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff9f2'; ctx.beginPath(); ctx.ellipse(-31*s, 2*s, 4*s, 8*s, 0, 0, Math.PI*2); ctx.fill();
 
-            // Cuello erguido y testuz
-            ctx.fillStyle = '#593a20'; ctx.save(); ctx.rotate(-0.48); ctx.fillRect(14*s, -26*s, 12*s, 28*s); ctx.restore();
-            ctx.fillStyle = '#734b29'; ctx.fillRect(18*s, -29*s, 18*s, 10*s);
+            ctx.fillStyle = '#59381b'; ctx.beginPath();
+            ctx.moveTo(8*s, -8*s); ctx.lineTo(24*s, -34*s); ctx.lineTo(34*s, -32*s); ctx.lineTo(22*s, 8*s); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#704722'; ctx.beginPath();
+            ctx.moveTo(24*s, -34*s); ctx.lineTo(42*s, -30*s); ctx.lineTo(34*s, -22*s); ctx.closePath(); ctx.fill();
 
-            // CORRECCIÓN RAMIFICACIÓN DE CUERNAS SEGÚN TROFEO VARIABLE (Solo machos)
             if (!this.isFemale) {
-                ctx.strokeStyle = '#ded5ca'; ctx.lineWidth = 2.5 * s; ctx.beginPath();
-                let len = 50 * this.antlerSize * s;
-                ctx.moveTo(18*s, -29*s); ctx.lineTo(10*s, -29*s - len); 
-                ctx.lineTo(-4*s, -32*s - len);
-                ctx.moveTo(14*s, -29*s - len*0.4); ctx.lineTo(2*s, -29*s - len*0.5); // Luchaderas
-                ctx.moveTo(12*s, -29*s - len*0.7); ctx.lineTo(22*s, -29*s - len*0.8); // Centrales
+                ctx.strokeStyle = '#e3ded5'; ctx.lineWidth = 2.2 * s; ctx.beginPath();
+                let hL = 52 * this.antlerSize * s;
+                ctx.moveTo(26*s, -34*s); ctx.quadraticCurveTo(18*s, -34*s - hL*0.6, 6*s, -32*s - hL);
+                ctx.moveTo(22*s, -34*s - hL*0.2); ctx.lineTo(32*s, -34*s - hL*0.4);
+                ctx.moveTo(18*s, -34*s - hL*0.5); ctx.lineTo(26*s, -34*s - hL*0.7);
                 ctx.stroke();
             }
-            ctx.fillStyle = '#452d19'; ctx.fillRect(-6*s, 10*s, 4*s, 26*s + swing); ctx.fillRect(15*s, 10*s, 4*s, 26*s - swing);
         } 
         else if (this.type === 'corzo') {
-            // Corzo estilizado (Pelo corza/faisán)
-            ctx.fillStyle = '#4d2a0c'; ctx.fillRect(-6*s, 8*s, 3*s, 18*s - swing); ctx.fillRect(6*s, 8*s, 3*s, 18*s + swing);
-            let corzo3D = ctx.createRadialGradient(-2*s, -1*s, 3*s, 0, 0, 16*s);
-            corzo3D.addColorStop(0, '#b86b27'); corzo3D.addColorStop(0.8, '#874c17'); corzo3D.addColorStop(1, '#4d2a0c');
-            ctx.fillStyle = corzo3D; ctx.beginPath(); ctx.ellipse(-2*s, 0, 16*s, 10*s, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(-17*s, 0, 3*s, 6*s, 0, 0, Math.PI*2); ctx.fill(); // Escudo limpio
-            ctx.fillStyle = '#734013'; ctx.save(); ctx.rotate(-0.5); ctx.fillRect(6*s, -16*s, 7*s, 15*s); ctx.restore();
-            ctx.fillStyle = '#874c17'; ctx.fillRect(9*s, -20*s, 10*s, 7*s);
-            ctx.fillStyle = '#111'; ctx.fillRect(8*s, -25*s, 2.5*s, 5*s); // Orejas directas
-        } 
+            ctx.fillStyle = '#47280b'; ctx.fillRect(-5*s, 10*s, 2.5*s, 22*s - swing); ctx.fillRect(8*s, 10*s, 2.5*s, 22*s + swing);
+            let corzoGrad = ctx.createRadialGradient(-1*s, -2*s, 2*s, 0, 0, 16*s);
+            corzoGrad.addColorStop(0, '#bd6f28'); corzoGrad.addColorStop(0.8, '#8a4e17'); corzoGrad.addColorStop(1, '#422409');
+            ctx.fillStyle = corzoGrad; ctx.beginPath();
+            ctx.moveTo(-18*s, -6*s); ctx.quadraticCurveTo(-4*s, -11*s, 8*s, -6*s); ctx.lineTo(12*s, 10*s); ctx.lineTo(-16*s, 10*s); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-16*s, 1*s, 4*s, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#8a4e17'; ctx.beginPath(); ctx.moveTo(4*s, -5*s); ctx.lineTo(11*s, -22*s); ctx.lineTo(17*s, -20*s); ctx.lineTo(11*s, 6*s); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#222'; ctx.fillRect(9*s, -28*s, 2*s, 7*s);
+        }
         else if (this.type === 'muflon') {
-            // Muflón salvaje
-            ctx.fillStyle = '#1f130b'; ctx.fillRect(-8*s, 10*s, 4*s, 18*s - swing); ctx.fillRect(8*s, 10*s, 4*s, 18*s + swing);
-            let muf3D = ctx.createRadialGradient(-3*s, 0, 4*s, -1*s, 1*s, 22*s);
-            muf3D.addColorStop(0, '#59351a'); muf3D.addColorStop(0.7, '#3b2210'); muf3D.addColorStop(1, '#1a0e06');
-            ctx.fillStyle = muf3D; ctx.beginPath(); ctx.ellipse(-2*s, 1*s, 22*s, 15*s, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#f7ebe1'; ctx.beginPath(); ctx.ellipse(-2*s, -2*s, 10*s, 7*s, 0, 0, Math.PI*2); ctx.fill(); // Silla de montar
-            ctx.fillStyle = '#26160a'; ctx.save(); ctx.rotate(-0.35); ctx.fillRect(10*s, -10*s, 10*s, 16*s); ctx.restore();
-            ctx.fillRect(12*s, -16*s, 11*s, 10*s);
-            
+            ctx.fillStyle = '#170e08'; ctx.fillRect(-7*s, 11*s, 3.5*s, 20*s - swing); ctx.fillRect(7*s, 11*s, 3.5*s, 20*s + swing);
+            let mufGrad = ctx.createRadialGradient(-2*s, -1*s, 3*s, 0, 0, 22*s);
+            mufGrad.addColorStop(0, '#663f23'); mufGrad.addColorStop(0.75, '#402613'); mufGrad.addColorStop(1, '#170e08');
+            ctx.fillStyle = mufGrad; ctx.beginPath(); ctx.ellipse(0, 0, 24*s, 14*s, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#faede3'; ctx.beginPath(); ctx.ellipse(-1*s, -1*s, 11*s, 7*s, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#301b0c'; ctx.beginPath(); ctx.moveTo(10*s, -6*s); ctx.lineTo(16*s, -20*s); ctx.lineTo(24*s, -14*s); ctx.closePath(); ctx.fill();
             if (!this.isFemale) {
-                ctx.strokeStyle = '#1f1915'; ctx.lineWidth = 5.5 * s; ctx.beginPath();
-                ctx.arc(10*s, -12*s, 11*s, Math.PI * 1.3, Math.PI * 0.4); ctx.stroke(); // Gran cuerno curvo
+                ctx.strokeStyle = '#241b14'; ctx.lineWidth = 5 * s; ctx.beginPath();
+                ctx.arc(14*s, -14*s, 12*s, Math.PI * 1.3, Math.PI * 0.4); ctx.stroke();
             }
-        } 
+        }
         else if (this.type === 'pato') {
-            // Ánade Real (Volando)
-            let pato3D = ctx.createLinearGradient(-12*s, 0, 12*s, 0);
-            pato3D.addColorStop(0, '#102030'); pato3D.addColorStop(1, '#1b4965');
-            ctx.fillStyle = pato3D; ctx.beginPath(); ctx.ellipse(0, 0, 15*s, 9*s, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#19763d'; ctx.beginPath(); ctx.arc(11*s, -7*s, 5.5*s, 0, Math.PI*2); ctx.fill(); // Cabeza verde intenso
-            ctx.fillStyle = '#f9a03f'; ctx.fillRect(15*s, -8*s, 5*s, 3*s); // Pico
-            ctx.fillStyle = '#fff'; ctx.fillRect(4*s, -3*s, 7*s, 1.2*s); // Collarín
-            ctx.fillStyle = '#8ecae6'; ctx.save(); ctx.translate(-1*s, -2*s); ctx.rotate(Math.sin(this.legCycle)*0.9); ctx.fillRect(-3*s, -11*s, 8*s, 11*s); ctx.restore(); // Ala batiendo
+            // Ánade Real anatómico
+            ctx.fillStyle = this.isFloating ? '#1c2833' : '#1c3144'; 
+            ctx.beginPath(); ctx.ellipse(0, 0, 16*s, 8*s, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#216c3b'; ctx.beginPath(); ctx.arc(11*s, -6*s, 5*s, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fca311'; ctx.fillRect(15*s, -7*s, 5*s, 2.5*s);
+            ctx.fillStyle = '#fff'; ctx.fillRect(5*s, -2*s, 6*s, 1*s);
+            
+            if (!this.dead) {
+                ctx.fillStyle = '#8d99ae'; ctx.save(); ctx.translate(-2*s, -2*s); ctx.rotate(Math.sin(this.legCycle)*0.95); ctx.fillRect(-2*s, -12*s, 7*s, 12*s); ctx.restore();
+            } else if (this.isFloating) {
+                // Dibujar alas recogidas y patas bocarriba inertes
+                ctx.fillStyle = '#fca311'; ctx.fillRect(-4*s, -10*s, 2*s, 5*s);
+            }
         }
         else {
-            // Cochinos / Jabalíes (Volumen robusto)
             let isBig = (this.type === 'big_boar');
-            ctx.fillStyle = '#0f0c0a'; ctx.fillRect(isBig?-14*s:-8*s, 10*s, 5*s, 15*s - swing); ctx.fillRect(isBig?10*s:5*s, 10*s, 5*s, 15*s + swing);
+            ctx.fillStyle = '#0a0908'; ctx.fillRect(isBig?-14*s:-8*s, 12*s, 5.5*s, 16*s - swing); ctx.fillRect(isBig?11*s:5*s, 12*s, 5.5*s, 16*s + swing);
             
-            let boar3D = ctx.createRadialGradient(isBig?2*s:1*s, -2*s, 5*s, 0, 0, isBig?24*s:15*s);
-            boar3D.addColorStop(0, isBig?'#292019':'#453224'); boar3D.addColorStop(0.8, isBig?'#14100c':'#241910'); boar3D.addColorStop(1, '#050403');
-            ctx.fillStyle = boar3D; ctx.beginPath(); ctx.ellipse(0, 0, isBig?25*s:15*s, isBig*5*s + 15*s, 0, 0, Math.PI*2); ctx.fill();
+            let boarGrad = ctx.createRadialGradient(isBig?4*s:2*s, -3*s, 4*s, 0, 0, isBig?26*s:16*s);
+            boarGrad.addColorStop(0, isBig?'#211a14':'#38271a'); boarGrad.addColorStop(0.75, isBig?'#120f0c':'#1f150e'); boarGrad.addColorStop(1, '#050403');
+            ctx.fillStyle = boarGrad;
+            ctx.beginPath();
+            ctx.moveTo(isBig?-30*s:-18*s, 4*s); 
+            ctx.quadraticCurveTo(isBig?-10*s:-6*s, isBig?-22*s:-14*s, isBig?6*s:4*s, isBig?-14*s:-10*s);
+            ctx.lineTo(isBig?22*s:14*s, 0); ctx.lineTo(isBig?14*s:10*s, 14*s); ctx.lineTo(isBig?-24*s:-14*s, 12*s);
+            ctx.closePath(); ctx.fill();
             
-            ctx.fillStyle = '#0f0c0a'; ctx.beginPath(); ctx.moveTo(8*s, -7*s); ctx.lineTo(isBig?33*s:20*s, 5*s); ctx.lineTo(12*s, 14*s); ctx.closePath(); ctx.fill(); // Morro
-            if (isBig) { ctx.fillStyle = '#ffffff'; ctx.fillRect(21*s, 1*s, 2.5*s, 2.5*s); } // Amoladera visible
+            ctx.fillStyle = '#0d0b09'; ctx.beginPath();
+            ctx.moveTo(isBig?12*s:8*s, -4*s); ctx.lineTo(isBig?34*s:22*s, 6*s); ctx.lineTo(isBig?10*s:6*s, 13*s); ctx.closePath(); ctx.fill();
+            if (isBig) { ctx.fillStyle = '#fff'; ctx.fillRect(21*s, 1*s, 3*s, 2.5*s); }
         }
         ctx.restore();
     }
 }
 
-// --- CONTRALOR DISPARADOR DE OLEADAS ---
+function spawnControl() {
+    if (!gameActive || isPaused) return;
+    if (entities.length <= 1) spawnGroup();
+}
+
 function spawnGroup() {
-    if (!gameActive) return;
     const direction = Math.random() > 0.5 ? 1 : -1;
-    const baseSpeed = 0.4 + Math.random() * 0.6;
+    const baseSpeed = 0.5 + Math.random() * 0.4;
 
     let pool = [];
     if (mode === 'cortadero') {
@@ -381,21 +396,21 @@ function spawnGroup() {
             entities.push(new Animal('big_boar', baseSpeed, direction));
         } else {
             let numSmall = 2 + Math.floor(Math.random() * 2);
-            let delay = 0;
+            let d = 0;
             for(let i=0; i<numSmall; i++) {
-                totalSpawns++; delay += 50 + Math.random()*40;
-                entities.push(new Animal('small_boar', baseSpeed, direction, delay));
+                totalSpawns++; d += 55 + Math.random()*45;
+                entities.push(new Animal('small_boar', baseSpeed, direction, d));
             }
         }
     } 
     else if (chosen === 'ciervo') {
         totalSpawns++;
-        let leader = new Animal('ciervo', baseSpeed * 0.85, direction, 0, false);
+        let leader = new Animal('ciervo', baseSpeed * 0.9, direction, 0, false);
         entities.push(leader);
         let numHembras = 1 + Math.floor(Math.random() * 2);
         for (let i = 0; i < numHembras; i++) {
             totalSpawns++;
-            entities.push(new Animal('ciervo', baseSpeed * 0.85, direction, 0, true, leader));
+            entities.push(new Animal('ciervo', baseSpeed * 0.9, direction, 0, true, leader));
         }
     } 
     else if (chosen === 'muflon') {
@@ -415,61 +430,98 @@ function spawnGroup() {
         let numPatos = 2 + Math.floor(Math.random() * 2);
         let d = 0;
         for (let i = 0; i < numPatos; i++) {
-            totalSpawns++; d += 45 + Math.random()*40;
-            entities.push(new Animal('pato', baseSpeed * 1.1, direction, d));
+            totalSpawns++; d += 50 + Math.random()*40;
+            entities.push(new Animal('pato', baseSpeed * 1.05, direction, d));
         }
     }
 }
 
-// --- MECÁNICA DEL PERDIGONAZO / BALAZO ---
+// --- CORE BALÍSTICO MODIFICADO (ADELANTO Y PLOMEO) ---
 function fire() {
     if (!canShoot || isPaused || !gameActive) return;
 
     canShoot = false;
     lastShotTime = performance.now();
-    boltBar.classList.remove('ready');
-
-    if (currentWeapon === 'rifle') {
-        playSound('rifle'); recoilY = -46;
-        setTimeout(() => { playSound('bolt'); }, 420);
-    } else {
-        playSound('shotgun'); recoilY = -32;
-    }
+    cadenceBar.classList.remove('ready');
 
     const shotX = crosshair.x;
     const shotY = crosshair.y;
     let hitAnything = false;
-    if (!PiaraAlerted) PiaraAlerted = true;
+    
+    if (!PiaraAlerted) PiaraAlerted = true; 
 
-    // Crear impactos visuales de polvo/sangre
-    for (let ent of entities) {
-        if (ent.dead) continue;
-        const futX = ent.x + (ent.currentSpeed * BULLET_FLIGHT_TIME * 60);
-        if (shotX >= futX && shotX <= futX + ent.width && shotY >= ent.y && shotY <= ent.y + ent.height) {
-            for(let i=0; i<12; i++) {
-                particles.push({
-                    x: shotX, y: shotY,
-                    vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4 - 1,
-                    radius: 2+Math.random()*2, alpha: 1,
-                    color: mode==='patos'?'#c2d5db':'#4a0202', life: 20
-                });
+    if (currentWeapon === 'rifle') {
+        playSound('rifle'); recoilY = -42;
+
+        // BALÍSTICA DE ADELANTO: Calcular posición futura basada en el tiempo de vuelo de la bala
+        for (let ent of entities) {
+            if (ent.dead) continue;
+            
+            // Dónde estará el animal cuando llegue el proyectil
+            const targetFutureX = ent.x + (ent.currentSpeed * RIFLE_BULLET_FLIGHT_TIME * 60);
+            
+            if (shotX >= targetFutureX && shotX <= targetFutureX + ent.width && shotY >= ent.y && shotY <= ent.y + ent.height) {
+                // Impacto certero adelantando la trayectoria
+                createBloodParticles(shotX, shotY);
+                hitAnything = true; ent.dead = true; totalKills++;
+                break;
             }
-            hitAnything = true; ent.dead = true; totalKills++;
-            break;
+        }
+    } else {
+        // BALÍSTICA DE ESCOPETA: Dispersión cilíndrica de perdigones (Abarca más espacio)
+        playSound('shotgun'); recoilY = -30;
+
+        // Dibujar ráfaga visual del plomeo en el aire
+        for (let i = 0; i < 30; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let dist = Math.random() * SHOTGUN_RADIUS;
+            particles.push({
+                x: shotX + Math.cos(angle) * dist, y: shotY + Math.sin(angle) * dist,
+                vx: (Math.random() - 0.5) * 1, vy: (Math.random() - 0.5) * 1,
+                radius: 1 + Math.random() * 1.5, alpha: 0.9, color: '#eceff1', life: 8
+            });
+        }
+
+        // Comprobar colisión radial amplia
+        for (let ent of entities) {
+            if (ent.dead) continue;
+            
+            // Centro geométrico de la pieza
+            let entCenterX = ent.x + ent.width / 2;
+            let entCenterY = ent.y + ent.height / 2;
+            
+            // Distancia del centro del perdigonazo a la pieza
+            let distance = Math.hypot(shotX - entCenterX, shotY - entCenterY);
+
+            if (distance <= SHOTGUN_RADIUS + (ent.width / 2)) {
+                createBloodParticles(entCenterX, entCenterY);
+                hitAnything = true; ent.dead = true; totalKills++;
+                // La escopeta barre zonas anchas; no rompemos el bucle por si derriba un doblete de patos
+                if (mode !== 'patos') break; 
+            }
         }
     }
     
-    if (!hitAnything) {
-        for(let i=0; i<10; i++) {
+    if (!hitAnything && currentWeapon === 'rifle') {
+        for(let i=0; i<8; i++) {
             particles.push({
                 x: shotX, y: shotY, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3,
-                radius: 1.5+Math.random()*1.5, alpha: 1, color: mode==='patos'?'#ffffff':'#5e503f', life: 12
+                radius: 1.5, alpha: 1, color: mode==='patos'?'#ffffff':'#544738', life: 10
             });
         }
     }
 }
 
-// --- ENTRADA TÁCTIL (TRACKPAD INFERIOR) ---
+function createBloodParticles(x, y) {
+    for(let i=0; i<12; i++) {
+        particles.push({
+            x: x, y: y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4 - 1,
+            radius: 2+Math.random()*2, alpha: 1, color: mode==='patos'?'#e0f2f1':'#520202', life: 18
+        });
+    }
+}
+
+// --- TRACKPAD TÁCTIL VERTICAL ---
 let touchLastX = 0, touchLastY = 0, isTouching = false;
 function onTrackpadStart(e) {
     if (isPaused) return; e.preventDefault(); initAudio();
@@ -493,7 +545,7 @@ trackpad.addEventListener('touchstart', onTrackpadStart, {passive: false});
 trackpad.addEventListener('touchmove', onTrackpadMove, {passive: false});
 trackpad.addEventListener('touchend', onTrackpadEnd, {passive: false});
 
-// --- MENÚS INTERACTIVOS Y REGLAS DE EXCLUSIVIDAD ---
+// --- ENLACES Y LOGICA DE MENÚS ---
 const btnCortadero = document.getElementById('btnModoCortadero');
 const btnPatos = document.getElementById('btnModoPatos');
 const panelArmasMonte = document.getElementById('panelArmasMonte');
@@ -503,31 +555,17 @@ const btnEscopetaMenu = document.getElementById('btnEscopetaMenu');
 
 function checkModeRestrictions() {
     if (mode === 'patos') {
-        currentWeapon = 'escopeta';
-        panelArmasMonte.style.display = 'none';
-        panelEspecies.style.display = 'none';
+        currentWeapon = 'escopeta'; panelArmasMonte.style.display = 'none'; panelEspecies.style.display = 'none';
     } else {
-        panelArmasMonte.style.display = 'block';
-        panelEspecies.style.display = 'block';
+        panelArmasMonte.style.display = 'block'; panelEspecies.style.display = 'block';
         currentWeapon = btnRifleMenu.classList.contains('selected') ? 'rifle' : 'escopeta';
     }
 }
 
-btnCortadero.addEventListener('click', () => {
-    mode = 'cortadero'; btnCortadero.classList.add('selected'); btnPatos.classList.remove('selected');
-    checkModeRestrictions();
-});
-btnPatos.addEventListener('click', () => {
-    mode = 'patos'; btnPatos.classList.add('selected'); btnCortadero.classList.remove('selected');
-    checkModeRestrictions();
-});
-
-btnRifleMenu.addEventListener('click', () => {
-    btnRifleMenu.classList.add('selected'); btnEscopetaMenu.classList.remove('selected'); currentWeapon = 'rifle';
-});
-btnEscopetaMenu.addEventListener('click', () => {
-    btnEscopetaMenu.classList.add('selected'); btnRifleMenu.classList.remove('selected'); currentWeapon = 'escopeta';
-});
+btnCortadero.addEventListener('click', () => { mode = 'cortadero'; btnCortadero.classList.add('selected'); btnPatos.classList.remove('selected'); checkModeRestrictions(); });
+btnPatos.addEventListener('click', () => { mode = 'patos'; btnPatos.classList.add('selected'); btnCortadero.classList.remove('selected'); checkModeRestrictions(); });
+btnRifleMenu.addEventListener('click', () => { btnRifleMenu.classList.add('selected'); btnEscopetaMenu.classList.remove('selected'); currentWeapon = 'rifle'; });
+btnEscopetaMenu.addEventListener('click', () => { btnEscopetaMenu.classList.add('selected'); btnRifleMenu.classList.remove('selected'); currentWeapon = 'escopeta'; });
 
 document.getElementById('btnStart').addEventListener('click', () => { initAudio(); document.getElementById('mainMenu').style.display = 'none'; resetGame(); });
 document.getElementById('btnRestart').addEventListener('click', () => { document.getElementById('resultsMenu').style.display = 'none'; resetGame(); });
@@ -536,12 +574,9 @@ document.getElementById('btnHome').addEventListener('click', () => { gameActive 
 document.getElementById('pauseBtn').addEventListener('click', () => {
     isPaused = true;
     if (mode === 'patos') {
-        document.getElementById('panelArmasPausa').style.display = 'none';
-        document.getElementById('lblAvisoPatos').style.display = 'block';
+        document.getElementById('panelArmasPausa').style.display = 'none'; document.getElementById('lblAvisoPatos').style.display = 'block';
     } else {
-        document.getElementById('panelArmasPausa').style.display = 'block';
-        document.getElementById('lblAvisoPatos').style.display = 'none';
-        // Sincronizar botones de pausa
+        document.getElementById('panelArmasPausa').style.display = 'block'; document.getElementById('lblAvisoPatos').style.display = 'none';
         if (currentWeapon === 'rifle') {
             document.getElementById('btnRifle').classList.add('selected'); document.getElementById('btnEscopeta').classList.remove('selected');
         } else {
@@ -570,10 +605,10 @@ function resetGame() {
 function endGame() {
     gameActive = false; isPaused = true;
     document.getElementById('resultsMenu').style.display = 'flex';
-    document.getElementById('resDetails').innerHTML = `LANCE COMPLETADO (${mode==='cortadero'?'Línea de Monte':'Tirada de Ánades'})<br><br>Entradas registradas: ${totalSpawns}<br>Blancos abatidos: <span style="color:#4cd964; font-size:24px;">${totalKills}</span>`;
+    document.getElementById('resDetails').innerHTML = `LANCE COMPLETADO (${mode==='cortadero'?'Línea de Monte':'Tirada de Ánades'})<br><br>Reses Avistadas: ${totalSpawns}<br>Blancos Cobrados: <span style="color:#4cd964; font-size:24px;">${totalKills}</span>`;
 }
 
-// --- CICLO RENDER PSEUDO-3D ---
+// --- CICLO CORE ---
 let lastTime = 0;
 function loop(timestamp) {
     let dt = (timestamp - lastTime) / 1000; if (dt > 0.1) dt = 0.1; lastTime = timestamp;
@@ -584,99 +619,103 @@ function loop(timestamp) {
         document.getElementById('txtKills').innerText = `COBRADOS: ${totalKills}/${totalSpawns}`;
         if (gameTimer <= 0) endGame();
 
-        if (recoilY < 0) { recoilY += dt * 175; if (recoilY > 0) recoilY = 0; }
+        if (recoilY < 0) { recoilY += dt * 170; if (recoilY > 0) recoilY = 0; }
 
         let elapsed = timestamp - lastShotTime;
-        if (currentWeapon === 'rifle') {
-            let progress = Math.min(elapsed / RIFLE_BOLT_TIME, 1); boltBar.style.width = (progress * 100) + '%';
-            if (progress >= 1) { canShoot = true; boltBar.classList.add('ready'); document.getElementById('trackpadLabel').innerText = "RIFLE ACERROJADO (Listo)"; }
-            else { canShoot = false; boltBar.classList.remove('ready'); document.getElementById('trackpadLabel').innerText = "MANEJO DE CERROJO MAUSER..."; }
-        } else {
-            let progress = Math.min(elapsed / SHOTGUN_FIRE_DELAY, 1); boltBar.style.width = (progress * 100) + '%';
-            if (progress >= 1) { canShoot = true; boltBar.classList.add('ready'); document.getElementById('trackpadLabel').innerText = "ESCOPETA SEMIAUTOMÁTICA LISTA"; }
-            else { canShoot = false; boltBar.classList.remove('ready'); document.getElementById('trackpadLabel').innerText = "CICLANDO PRESIÓN DE GASES..."; }
+        let progress = Math.min(elapsed / FIRE_DELAY, 1);
+        cadenceBar.style.width = (progress * 100) + '%';
+        if (progress >= 1) { 
+            canShoot = true; cadenceBar.classList.add('ready'); 
+            document.getElementById('trackpadLabel').innerText = currentWeapon === 'rifle' ? "RIFLE SEMIAUTOMÁTICO EN RECIENTRE" : "ESCOPETA PERDIGONAZO AMPLIO LISTA";
+        } else { 
+            canShoot = false; cadenceBar.classList.remove('ready'); 
+            document.getElementById('trackpadLabel').innerText = "ENCARANDO PUNTO DE MIRA..."; 
         }
 
-        if (entities.length === 0 && timestamp - lastSpawnTime > 1400) { spawnGroup(); lastSpawnTime = timestamp; }
+        spawnControl();
         entities.forEach(ent => ent.update(dt * 1000));
     }
 
-    // --- RENDERIZADO DE CAPAS DE MONTE BAJO Y CAÑAVERALES ---
+    // --- RENDERIZADO DE ENTORNO ---
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (mode === 'cortadero') {
-        // Render 3D Suelo de Sierra / Cortadero Limpio
-        let skyGrad = ctx.createLinearGradient(0,0,0,canvas.height*0.45);
-        skyGrad.addColorStop(0, '#758a99'); skyGrad.addColorStop(1, '#cedce7');
+        let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.44);
+        skyGrad.addColorStop(0, '#576f80'); skyGrad.addColorStop(0.6, '#8ca0ba'); skyGrad.addColorStop(1, '#b0c2cc');
         ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Cadenas montañosas lejanas (Fondo limpio sin árboles)
-        ctx.fillStyle = '#3a4235'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.46); ctx.lineTo(canvas.width*0.35, canvas.height*0.22); ctx.lineTo(canvas.width*0.65, canvas.height*0.38); ctx.lineTo(canvas.width, canvas.height*0.18); ctx.lineTo(canvas.width, canvas.height*0.46); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#2b3325'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.45); ctx.lineTo(canvas.width*0.3, canvas.height*0.26); ctx.lineTo(canvas.width*0.6, canvas.height*0.36); ctx.lineTo(canvas.width, canvas.height*0.22); ctx.lineTo(canvas.width, canvas.height*0.45); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#1e2419'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.45); ctx.lineTo(canvas.width*0.45, canvas.height*0.32); ctx.lineTo(canvas.width*0.8, canvas.height*0.4); ctx.lineTo(canvas.width, canvas.height*0.29); ctx.lineTo(canvas.width, canvas.height*0.45); ctx.closePath(); ctx.fill();
         
-        // Tapiz del suelo de monte bajo
-        ctx.fillStyle = '#61503c'; ctx.fillRect(0, canvas.height*0.45, canvas.width, canvas.height*0.55);
+        ctx.fillStyle = '#4f4130'; ctx.fillRect(0, canvas.height * 0.44, canvas.width, canvas.height * 0.56);
     } else {
-        // Render 3D Escenario Ribera de Patos
-        ctx.fillStyle = '#94b0c2'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#2d4a36'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.44); ctx.lineTo(canvas.width, canvas.height*0.38); ctx.lineTo(canvas.width, 0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#1a2e2b'; ctx.fillRect(0, canvas.height*0.42, canvas.width, canvas.height*0.58); // Agua profunda
+        ctx.fillStyle = '#7a9cb3'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#213a27'; ctx.beginPath(); ctx.moveTo(0, canvas.height*0.42); ctx.lineTo(canvas.width, canvas.height*0.37); ctx.lineTo(canvas.width, 0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
+        
+        let waterGrad = ctx.createLinearGradient(0, canvas.height*0.4, 0, canvas.height);
+        waterGrad.addColorStop(0, '#132224'); waterGrad.addColorStop(1, '#1b3635');
+        ctx.fillStyle = waterGrad; ctx.fillRect(0, canvas.height * 0.4, canvas.width, canvas.height * 0.6);
     }
 
-    // Renderizar fauna antes de los arbustos (Algoritmo de oclusión natural)
+    // Dibujar animales (Incluyendo patos cayendo/flotando)
     entities.forEach(ent => ent.draw());
 
-    // Pintar vegetación baja densa (Arbustos pequeños que ocultan parcialmente los pies de la res)
+    // Arbustos
     bushes.forEach(b => {
-        let grad = ctx.createRadialGradient(b.x, b.y, 2, b.x, b.y, b.radius);
-        grad.addColorStop(0, b.color); grad.addColorStop(1, '#0e140c');
+        let grad = ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, b.radius);
+        grad.addColorStop(0, b.color); grad.addColorStop(0.8, '#1e2617'); grad.addColorStop(1, '#0b0f07');
         ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2); ctx.fill();
     });
 
     if (!isPaused) {
-        particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.14; p.alpha = Math.max(0, p.life / 20); p.life--; ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
+        particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.alpha = Math.max(0, p.life / 18); p.life--; ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
         particles = particles.filter(p => p.life > 0);
     }
 
     crosshair.x = Math.max(20, Math.min(canvas.width - 20, crosshair.x));
-    crosshair.y = Math.max(canvas.height * 0.1, Math.min(canvas.height * 0.78, crosshair.y));
+    crosshair.y = Math.max(canvas.height * 0.1, Math.min(canvas.height * 0.76, crosshair.y));
 
-    // --- ENCARADO DE ARMAS ---
+    // --- RENDER DE ARMAS E INTERFAZ DE TIRO ---
     ctx.save();
     let gunX = crosshair.x;
     let gunY = crosshair.y + recoilY;
     let baseW = canvas.width * 0.25;
 
+    // Dibujar círculo guía de dispersión translúcido en modo escopeta/patos para ayudar al cazador
+    if (currentWeapon === 'escopeta' && mode === 'patos' && !isPaused) {
+        ctx.strokeStyle = 'rgba(255, 204, 0, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, SHOTGUN_RADIUS, 0, Math.PI * 2); ctx.stroke();
+    }
+
     if (currentWeapon === 'rifle') {
-        ctx.fillStyle = '#1a110a'; ctx.beginPath();
-        ctx.moveTo(canvas.width/2 - baseW + (gunX - canvas.width/2)*0.3, canvas.height); ctx.lineTo(canvas.width/2 + baseW + (gunX - canvas.width/2)*0.3, canvas.height);
-        ctx.lineTo(gunX + 22, gunY + 110); ctx.lineTo(gunX - 22, gunY + 110); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#16191c'; ctx.fillRect(gunX - 13, gunY + 45, 26, 65);
-        ctx.fillStyle = 'rgba(110, 190, 255, 0.22)'; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 34, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = '#0a0a0a'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 34, 0, Math.PI*2); ctx.stroke();
-        ctx.fillStyle = '#ff1a1a'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 3, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#14171a'; ctx.beginPath();
+        ctx.moveTo(canvas.width/2 - baseW + (gunX - canvas.width/2)*0.28, canvas.height); ctx.lineTo(canvas.width/2 + baseW + (gunX - canvas.width/2)*0.28, canvas.height);
+        ctx.lineTo(gunX + 20, gunY + 110); ctx.lineTo(gunX - 20, gunY + 110); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#1f2429'; ctx.fillRect(gunX - 12, gunY + 45, 24, 65);
+        ctx.fillStyle = 'rgba(120, 200, 255, 0.2)'; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 32, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#050505'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 32, 0, Math.PI*2); ctx.stroke();
+        ctx.fillStyle = '#ff1a1a'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 2.5, 0, Math.PI*2); ctx.fill();
     } else {
-        // Escopeta Semiautomática de madera fina veteada
         let woodGrad = ctx.createLinearGradient(gunX - 22, canvas.height, gunX + 22, canvas.height);
-        woodGrad.addColorStop(0, '#40220d'); woodGrad.addColorStop(0.5, '#693b1b'); woodGrad.addColorStop(1, '#2b1708');
+        woodGrad.addColorStop(0, '#381e0b'); woodGrad.addColorStop(0.5, '#5e3416'); woodGrad.addColorStop(1, '#241306');
         ctx.fillStyle = woodGrad; ctx.beginPath();
-        ctx.moveTo(canvas.width/2 - baseW*0.55 + (gunX - canvas.width/2)*0.25, canvas.height); ctx.lineTo(canvas.width/2 + baseW*0.55 + (gunX - canvas.width/2)*0.25, canvas.height);
-        ctx.lineTo(gunX + 14, gunY + 75); ctx.lineTo(gunX - 14, gunY + 75); ctx.closePath(); ctx.fill();
+        ctx.moveTo(canvas.width/2 - baseW*0.55 + (gunX - canvas.width/2)*0.22, canvas.height); ctx.lineTo(canvas.width/2 + baseW*0.55 + (gunX - canvas.width/2)*0.22, canvas.height);
+        ctx.lineTo(gunX + 13, gunY + 80); ctx.lineTo(gunX - 13, gunY + 80); ctx.closePath(); ctx.fill();
 
-        let metalGrad = ctx.createLinearGradient(gunX - 9, gunY + 75, gunX + 9, gunY + 75);
-        metalGrad.addColorStop(0, '#1a1d20'); metalGrad.addColorStop(0.5, '#3a4047'); metalGrad.addColorStop(1, '#0f1012');
+        let metalGrad = ctx.createLinearGradient(gunX - 9, gunY + 80, gunX + 9, gunY + 80);
+        metalGrad.addColorStop(0, '#16181a'); metalGrad.addColorStop(0.5, '#33383d'); metalGrad.addColorStop(1, '#0b0c0d');
         ctx.fillStyle = metalGrad; ctx.beginPath();
-        ctx.moveTo(gunX - 11, gunY + 75); ctx.lineTo(gunX + 11, gunY + 75); ctx.lineTo(gunX + 4, gunY); ctx.lineTo(gunX - 4, gunY); ctx.closePath(); ctx.fill();
-
-        ctx.fillStyle = '#0a0b0c'; ctx.fillRect(gunX - 1.2, gunY, 2.4, 75);
-        ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 2.8, 0, Math.PI*2); ctx.fill(); // Latón puro
+        ctx.moveTo(gunX - 10, gunY + 80); ctx.lineTo(gunX + 10, gunY + 80); ctx.lineTo(gunX + 4, gunY); ctx.lineTo(gunX - 4, gunY); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ffb703'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 2.5, 0, Math.PI*2); ctx.fill();
     }
     ctx.restore();
 
-    entities = entities.filter(ent => !((ent.direction === -1 && ent.x < -220) || (ent.direction === 1 && ent.x > canvas.width + 220) || (ent.dead && ent.deathTimer > 1200)));
+    // Mantener patos flotando en el agua sin borrarlos inmediatamente del renderizado
+    entities = entities.filter(ent => !((ent.direction === -1 && ent.x < -250) || (ent.direction === 1 && ent.x > canvas.width + 250) || (ent.dead && ent.type !== 'pato' && ent.deathTimer > 1000) || (ent.dead && ent.type === 'pato' && ent.x > canvas.width + 100)));
     requestAnimationFrame(loop);
 }
 
-// Inicialización asíncrona por restricciones de interacción móvil
 checkModeRestrictions();
 requestAnimationFrame(loop);
 </script>
