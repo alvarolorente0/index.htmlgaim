@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Montero Realista 3D - Siluetas Orgánicas</title>
+    <title>Montero Realista 3D - Curvas Orgánicas</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #050804; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -11,14 +11,12 @@
         #gameContainer { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
         canvas { width: 100%; height: 60%; background: #141a10; display: block; }
         
-        /* Trackpad inferior táctil */
         #trackpad { width: 100%; height: 40%; background: linear-gradient(135deg, #1a120b, #080503); border-top: 4px solid #2b1c0e; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; text-align: center; padding: 20px; font-weight: bold; text-shadow: 1px 1px 2px #000; }
         #trackpad.active { background: linear-gradient(135deg, #24190f, #0d0805); }
         
         #cadenceBar { position: absolute; top: 0; left: 0; height: 6px; background: #ff3b30; width: 100%; transition: width 0.05s linear; }
         #cadenceBar.ready { background: #4cd964; }
 
-        /* Interfaces */
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3,5,3,0.94); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 25px; text-align: center; }
         .menu-card { background: #11140f; border: 2px solid #3d3224; padding: 20px; border-radius: 12px; width: 100%; max-width: 360px; box-shadow: 0 0 25px rgba(0,0,0,0.9); }
         
@@ -31,9 +29,7 @@
         .selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .selector-grid button { font-size: 11px; padding: 8px; margin: 0; }
         
-        /* HUD superior */
         #hud { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; z-index: 5; pointer-events: none; font-size: 12px; font-weight: bold; text-shadow: 2px 2px 4px #000; color: #ede8df; }
-        
         .top-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 6; }
         .ctrl-btn { width: 36px; height: 36px; padding: 0; margin: 0; border-radius: 50%; background: rgba(36,24,13,0.8); display: flex; justify-content: center; align-items: center; font-size: 15px; }
     </style>
@@ -61,7 +57,7 @@
     <div id="mainMenu" class="overlay">
         <div class="menu-card">
             <h1>MONTERÍA REALISTA 3D</h1>
-            <p style="font-size: 11px; color:#5c6358; margin-bottom: 12px;">Siluetas Curvas Orgánicas y Cerrojo Lento</p>
+            <p style="font-size: 11px; color:#5c6358; margin-bottom: 12px;">Curvas Anatómicas y Tiempos de Espera Reales</p>
             
             <h3>MODALIDAD</h3>
             <div class="selector-grid">
@@ -73,7 +69,7 @@
                 <h3>OPCIÓN DE ARMA</h3>
                 <div class="selector-grid">
                     <button id="btnRifleMenu" class="selected">Rifle (Cerrojo 800ms)</button>
-                    <button id="btnEscopetaMenu">Semiaut. (Bala)</button>
+                    <button id="btnEscopetaMenu">Semiaut. (Carrera Rápida)</button>
                 </div>
             </div>
 
@@ -107,7 +103,7 @@
                 <button id="btnRifle" class="selected">Rifle de Caza</button>
                 <button id="btnEscopeta">Semiautomática Bala</button>
             </div>
-            <p id="lblAvisoPatos" style="display:none; font-size:11px; color:#bd4242; margin: 10px 0;">* En río se utiliza choke de 20px automáticamente.</p>
+            <p id="lblAvisoPatos" style="display:none; font-size:11px; color:#bd4242; margin: 10px 0;">* En río se caza sin mira con plomeo de 4px.</p>
             <hr style="border:1px solid #232920; margin:12px 0;">
             <button id="btnResume" style="background:#44593a; color:#fff;">Quitar Seguro</button>
         </div>
@@ -115,7 +111,7 @@
 </div>
 
 <script>
-// --- MOTOR SINTÉTICO DE AUDIO REALISTA ---
+// --- MOTOR DE AUDIO ---
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
@@ -134,7 +130,7 @@ function playSound(type) {
     }
 }
 
-// --- VARIABLES MAESTRAS Y CONFIGURACIÓN ---
+// --- CONFIGURACIÓN GENERACIÓN Y CONTROL ---
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const trackpad = document.getElementById('trackpad');
@@ -143,14 +139,16 @@ const cadenceBar = document.getElementById('cadenceBar');
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight * 0.6; }
 resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
-let isPaused = true, gameTimer = 45, totalSpawns = 0, totalKills = 0, lastSpawnTime = 0, gameActive = false;
+let isPaused = true, gameTimer = 45, totalSpawns = 0, totalKills = 0, gameActive = false;
 let currentWeapon = 'rifle', canShoot = true, lastShotTime = 0, recoilY = 0;
 let PiaraAlerted = false, entities = [], particles = [], bushes = [];
 let crosshair = { x: canvas.width / 2, y: canvas.height / 2 };
 
-// Parámetros Mecánicos Modificados
-let FIRE_DELAY = 800; // Por defecto inicia en rifle (800ms)
-const PATO_CHOKE_RADIUS = 20; // Plomeo cerrado de competición a 20 píxeles
+// Control de oleadas para simular esperas sin animales en el puesto
+let nextSpawnTimeout = 0; 
+
+let FIRE_DELAY = 800; 
+const PATO_CHOKE_RADIUS = 4; 
 const TRACKPAD_SENSITIVITY = 1.65;
 let mode = 'cortadero'; 
 let activeSpecies = { boar: true, ciervo: true, muflon: true, corzo: true };
@@ -169,7 +167,7 @@ function generateEnvironment() {
     bushes.sort((a, b) => a.y - b.y);
 }
 
-// --- CLASE ANIMAL: REDISEÑO COMPLETO CON CURVAS SUAVES ---
+// --- CLASE ANIMAL: GEOMETRÍA DE CURVAS CURVAS ORGÁNICAS (ADIÓS MINECRAFT) ---
 class Animal {
     constructor(type, speed, direction, delay = 0, isFemale = false, packLeader = null) {
         this.type = type;
@@ -177,18 +175,14 @@ class Animal {
         this.isFemale = isFemale;
         this.packLeader = packLeader;
 
-        if (type === 'pato') {
-            this.zDepth = 0.9; this.scaleFactor = 0.65;
-        } else {
-            this.zDepth = currentWeapon === 'rifle' ? 0.38 : 1.05;
-            this.scaleFactor = this.zDepth;
-        }
+        this.scaleFactor = type === 'pato' ? 0.65 : (currentWeapon === 'rifle' ? 0.38 : 1.05);
+        
+        if (type === 'corzo') this.baseSpeed = 1.45;
+        else if (type === 'pato') this.baseSpeed = 2.4;
+        else this.baseSpeed = 0.70 + speed * 0.35;
 
-        if (type === 'corzo') { this.baseSpeed = 1.45; } 
-        else if (type === 'pato') { this.baseSpeed = 2.4; } 
-        else { this.baseSpeed = 0.70 + speed * 0.35; }
-
-        if (currentWeapon === 'rifle' && type !== 'pato') { this.baseSpeed *= 0.65; }
+        if (currentWeapon === 'rifle' && type !== 'pato') this.baseSpeed *= 0.65;
+        else if (currentWeapon === 'escopeta' && type !== 'pato') this.baseSpeed *= 1.6; 
 
         this.currentSpeed = this.baseSpeed * direction;
 
@@ -202,22 +196,16 @@ class Animal {
         this.height = this.h * this.scaleFactor;
         this.x = direction === 1 ? -this.width - delay : canvas.width + delay;
         
-        if (type === 'pato') {
-            this.y = canvas.height * 0.15 + (Math.random() * 30);
-        } else {
-            this.y = currentWeapon === 'rifle' ? (canvas.height * 0.44 + (Math.random()*15)) : (canvas.height * 0.54 + Math.random() * 25);
-        }
+        this.y = type === 'pato' ? canvas.height * 0.15 + (Math.random() * 30) : (currentWeapon === 'rifle' ? (canvas.height * 0.44 + (Math.random()*15)) : (canvas.height * 0.54 + Math.random() * 25));
 
         this.dead = false; this.deathTimer = 0; this.angle = 0; this.legCycle = 0;
         this.antlerSize = isFemale ? 0 : (0.9 + Math.random() * 0.5); 
-
         this.vy = 0; this.isFloating = false;
         this.waterLevel = canvas.height * 0.46 + (Math.random() * 30);
     }
 
     update(dt) {
         const step = dt / 16.66;
-
         if (this.dead) {
             this.deathTimer += dt;
             if (this.type === 'pato') {
@@ -242,8 +230,7 @@ class Animal {
         }
 
         if (PiaraAlerted && this.type !== 'pato') {
-            let panicMultiplier = this.type === 'corzo' ? 2.5 : 2.2;
-            this.currentSpeed = this.baseSpeed * panicMultiplier * this.direction;
+            this.currentSpeed = this.baseSpeed * (this.type === 'corzo' ? 2.3 : 2.0) * this.direction;
         }
 
         this.x += this.currentSpeed * step;
@@ -259,106 +246,88 @@ class Animal {
         let swing = this.dead ? 0 : Math.sin(this.legCycle) * 6;
         let s = this.scaleFactor;
 
+        // Patas estilizadas curvas para evitar las líneas rectas
+        ctx.strokeStyle = this.type === 'big_boar' ? '#050505' : (this.type === 'ciervo' ? '#26190e' : '#170e08');
+        ctx.lineWidth = 5 * s;
+        if(this.type !== 'pato') {
+            ctx.beginPath(); ctx.moveTo(-10*s, 5*s); ctx.quadraticCurveTo((-12*s) - swing*0.5, 15*s, (-14*s), 26*s); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(10*s, 5*s); ctx.quadraticCurveTo((12*s) + swing*0.5, 15*s, (14*s), 26*s); ctx.stroke();
+        }
+
         if (this.type === 'ciervo') {
-            ctx.fillStyle = '#26190e'; 
-            ctx.fillRect(-8*s, 12*s, 3.5*s, 32*s - swing); ctx.fillRect(12*s, 12*s, 3.5*s, 32*s + swing);
-            
             let bodyGrad = ctx.createRadialGradient(-3*s, -4*s, 4*s, -1*s, 0, 32*s);
             bodyGrad.addColorStop(0, '#80542d'); bodyGrad.addColorStop(1, '#2e1c0c');
             ctx.fillStyle = bodyGrad;
             
+            // Cuerpo elíptico curvado
             ctx.beginPath();
-            ctx.moveTo(-32*s, -2*s);
-            ctx.quadraticCurveTo(-15*s, -16*s, 6*s, -12*s);
-            ctx.quadraticCurveTo(22*s, -8*s, 22*s, 12*s);
-            ctx.quadraticCurveTo(0, 16*s, -26*s, 12*s);
-            ctx.closePath(); ctx.fill();
+            ctx.moveTo(-35*s, 4*s);
+            ctx.bezierCurveTo(-25*s, -18*s, 10*s, -15*s, 22*s, -6*s);
+            ctx.bezierCurveTo(28*s, 5*s, 15*s, 16*s, -15*s, 14*s);
+            ctx.bezierCurveTo(-30*s, 12*s, -38*s, 10*s, -35*s, 4*s);
+            ctx.fill();
 
-            // Cabeza estilizada curva
+            // Cuello y cabeza fluidos
             ctx.fillStyle = '#59381b'; ctx.beginPath();
-            ctx.moveTo(8*s, -10*s); ctx.quadraticCurveTo(20*s, -32*s, 25*s, -32*s);
-            ctx.quadraticCurveTo(36*s, -30*s, 22*s, 6*s); ctx.closePath(); ctx.fill();
+            ctx.moveTo(10*s, -8*s);
+            ctx.bezierCurveTo(18*s, -26*s, 24*s, -34*s, 28*s, -34*s);
+            ctx.bezierCurveTo(38*s, -32*s, 32*s, -18*s, 16*s, 6*s);
+            ctx.fill();
 
             if (!this.isFemale) {
-                ctx.strokeStyle = '#e3ded5'; ctx.lineWidth = 2.2 * s; ctx.beginPath();
-                let hL = 52 * this.antlerSize * s;
-                ctx.moveTo(24*s, -32*s); ctx.quadraticCurveTo(16*s, -32*s - hL*0.6, 6*s, -32*s - hL);
-                ctx.moveTo(20*s, -34*s - hL*0.2); ctx.lineTo(30*s, -34*s - hL*0.4);
+                ctx.strokeStyle = '#e3ded5'; ctx.lineWidth = 2.5 * s; ctx.beginPath();
+                let hL = 50 * this.antlerSize * s;
+                ctx.moveTo(25*s, -34*s); ctx.quadraticCurveTo(12*s, -34*s - hL*0.8, 4*s, -34*s - hL);
+                ctx.moveTo(19*s, -34*s - hL*0.3); ctx.quadraticCurveTo(28*s, -34*s - hL*0.5, 32*s, -34*s - hL*0.6);
                 ctx.stroke();
             }
         } 
         else if (this.type === 'corzo') {
-            ctx.fillStyle = '#47280b'; ctx.fillRect(-4*s, 10*s, 2.5*s, 22*s - swing); ctx.fillRect(6*s, 10*s, 2.5*s, 22*s + swing);
             let corzoGrad = ctx.createRadialGradient(-1*s, -2*s, 2*s, 0, 0, 16*s);
             corzoGrad.addColorStop(0, '#bd6f28'); corzoGrad.addColorStop(1, '#422409');
             ctx.fillStyle = corzoGrad; ctx.beginPath();
-            ctx.moveTo(-16*s, -4*s); ctx.quadraticCurveTo(-4*s, -12*s, 8*s, -6*s);
-            ctx.quadraticCurveTo(12*s, 4*s, 10*s, 10*s); ctx.lineTo(-14*s, 10*s); ctx.closePath(); ctx.fill();
+            ctx.ellipse(0, 2*s, 20*s, 11*s, 0, 0, Math.PI*2); ctx.fill();
             
             ctx.fillStyle = '#8a4e17'; ctx.beginPath();
-            ctx.moveTo(4*s, -5*s); ctx.quadraticCurveTo(10*s, -22*s, 14*s, -22*s);
-            ctx.quadraticCurveTo(18*s, -20*s, 11*s, 6*s); ctx.closePath(); ctx.fill();
-            
-            if (!this.isFemale) {
-                ctx.strokeStyle = '#3d362d'; ctx.lineWidth = 2.0 * s; ctx.beginPath();
-                ctx.moveTo(13*s, -22*s); ctx.lineTo(11*s, -38*s); 
-                ctx.moveTo(12*s, -29*s); ctx.lineTo(15*s, -34*s);
-                ctx.stroke();
-            }
+            ctx.moveTo(6*s, -3*s); ctx.bezierCurveTo(12*s, -18*s, 15*s, -24*s, 17*s, -24*s);
+            ctx.bezierCurveTo(22*s, -22*s, 18*s, -10*s, 11*s, 6*s); ctx.fill();
         }
         else if (this.type === 'muflon') {
-            ctx.fillStyle = '#170e08'; ctx.fillRect(-6*s, 11*s, 3.5*s, 20*s - swing); ctx.fillRect(6*s, 11*s, 3.5*s, 20*s + swing);
             let mufGrad = ctx.createRadialGradient(-2*s, -1*s, 3*s, 0, 0, 22*s);
             mufGrad.addColorStop(0, '#663f23'); mufGrad.addColorStop(1, '#170e08');
-            ctx.fillStyle = mufGrad; ctx.beginPath(); ctx.ellipse(0, 0, 24*s, 14*s, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = mufGrad; ctx.beginPath(); ctx.ellipse(0, 0, 25*s, 15*s, 0, 0, Math.PI*2); ctx.fill();
+            
             if (!this.isFemale) {
-                ctx.strokeStyle = '#241b14'; ctx.lineWidth = 4.5 * s; ctx.beginPath();
-                ctx.arc(12*s, -12*s, 11*s, Math.PI * 1.3, Math.PI * 0.4); ctx.stroke();
+                ctx.strokeStyle = '#241b14'; ctx.lineWidth = 5 * s; ctx.beginPath();
+                ctx.arc(12*s, -10*s, 12*s, Math.PI * 1.2, Math.PI * 0.3); ctx.stroke();
             }
         }
         else if (this.type === 'pato') {
-            ctx.fillStyle = this.isFloating ? '#1c2833' : '#1c3144'; ctx.beginPath(); ctx.ellipse(0, 0, 16*s, 8*s, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#216c3b'; ctx.beginPath(); ctx.arc(11*s, -6*s, 4.5*s, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#fca311'; ctx.beginPath(); ctx.moveTo(14*s, -7*s); ctx.quadraticCurveTo(19*s, -6*s, 15*s, -4*s); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = this.isFloating ? '#1c2833' : '#1c3144'; ctx.beginPath(); ctx.ellipse(0, 0, 16*s, 9*s, 0, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#216c3b'; ctx.beginPath(); ctx.arc(11*s, -7*s, 5*s, 0, Math.PI*2); ctx.fill();
         }
         else {
-            // --- JABALÍ MACARENO CON SILUETA CURVA ORGÁNICA ULTRA-REALISTA ---
-            // Patas curvadas y fuertes en la base
-            ctx.fillStyle = '#050505'; 
-            ctx.fillRect(-16*s, 12*s, 6.5*s, 16*s - swing); ctx.fillRect(10*s, 12*s, 6.5*s, 16*s + swing);
-
-            // Capa de degradado para simular volumen y borra real
+            // --- JABALÍ MONTERO: SILUETA REDONDEADA ULTRA-REALISTA ---
             let boarGrad = ctx.createLinearGradient(-38*s, -10*s, 32*s, 10*s);
-            boarGrad.addColorStop(0, '#090808'); boarGrad.addColorStop(0.4, '#241f1a'); boarGrad.addColorStop(1, '#050505');
+            boarGrad.addColorStop(0, '#090808'); boarGrad.addColorStop(0.4, '#26201a'); boarGrad.addColorStop(1, '#050505');
             ctx.fillStyle = boarGrad;
             
-            // Trazado anatómico suave con curvas de Bézier (Lomo arqueado, gran cruz y grupa caída)
             ctx.beginPath();
-            ctx.moveTo(-35*s, 6*s); // Trasero bajo
-            ctx.quadraticCurveTo(-28*s, -12*s, -12*s, -22*s); // Curva hacia la joroba alta de la cruz
-            ctx.quadraticCurveTo(6*s, -24*s, 14*s, -8*s);    // Caída limpia de las cerdas del lomo hacia el cuello
-            ctx.quadraticCurveTo(24*s, -2*s, 22*s, 14*s);    // Unión curva del pecho
-            ctx.quadraticCurveTo(0, 17*s, -28*s, 13*s);     // Vientre orgánico
+            ctx.moveTo(-35*s, 6*s); 
+            ctx.bezierCurveTo(-32*s, -16*s, -14*s, -26*s, -4*s, -25*s); // Gran Cruz arqueada del jabalí viejo
+            ctx.bezierCurveTo(8*s, -24*s, 18*s, -6*s, 15*s, 10*s); 
+            ctx.bezierCurveTo(10*s, 18*s, -15*s, 18*s, -30*s, 12*s); 
             ctx.closePath(); ctx.fill();
 
-            // Líneas finas de cerdas erizadas en la cruz
-            ctx.strokeStyle = '#14110f'; ctx.lineWidth = 1.8;
-            ctx.beginPath();
-            for(let i = -20; i < 6; i += 4) {
-                ctx.moveTo(i*s, -16*s); ctx.quadraticCurveTo((i-2)*s, -21*s, (i-3)*s, -23*s);
-            }
-            ctx.stroke();
-
-            // Jeta afilada de cochino viejo (Líneas prolongadas y curvas)
+            // Jeta afilada pero curva continua
             ctx.fillStyle = '#090808'; ctx.beginPath();
-            ctx.moveTo(13*s, -8*s);
-            ctx.quadraticCurveTo(26*s, 0, 38*s, 6*s); // Curva superior de la jeta
-            ctx.quadraticCurveTo(24*s, 14*s, 11*s, 14*s); ctx.closePath(); ctx.fill();
+            ctx.moveTo(12*s, -6*s);
+            ctx.bezierCurveTo(28*s, 2*s, 36*s, 5*s, 38*s, 6*s); 
+            ctx.bezierCurveTo(34*s, 12*s, 22*s, 13*s, 11*s, 10*s); ctx.closePath(); ctx.fill();
             
-            // Navajas afiladas blancas saliendo de los colmillos
+            // Amoladeras/Navajas
             ctx.fillStyle = '#ffffff'; ctx.beginPath();
-            ctx.moveTo(24*s, 7*s); ctx.quadraticCurveTo(26*s, 2*s, 25*s, 1*s);
-            ctx.quadraticCurveTo(22*s, 4*s, 22*s, 6*s); ctx.closePath(); ctx.fill();
+            ctx.moveTo(25*s, 6*s); ctx.quadraticCurveTo(27*s, 2*s, 26*s, 1*s); ctx.quadraticCurveTo(23*s, 4*s, 23*s, 6*s); ctx.fill();
         }
         ctx.restore();
     }
@@ -366,7 +335,14 @@ class Animal {
 
 function spawnControl() {
     if (!gameActive || isPaused) return;
-    if (entities.length <= 1) spawnGroup();
+
+    // Solo genera animales si el temporizador de tregua/espera ha terminado
+    let now = performance.now();
+    if (entities.length === 0 && now > nextSpawnTimeout) {
+        spawnGroup();
+        // Genera una tregua obligatoria de 4 a 7 segundos para que el puesto respire limpio
+        nextSpawnTimeout = now + 4000 + Math.random() * 3000;
+    }
 }
 
 function spawnGroup() {
@@ -387,17 +363,14 @@ function spawnGroup() {
     let chosen = pool[Math.floor(Math.random() * pool.length)];
 
     if (chosen === 'boar') {
-        totalSpawns++;
-        entities.push(new Animal('big_boar', baseSpeed, direction));
+        totalSpawns++; entities.push(new Animal('big_boar', baseSpeed, direction));
         if (Math.random() < 0.40) {
-            totalSpawns++;
-            entities.push(new Animal('big_boar', baseSpeed * 0.95, direction, 75 + Math.random()*40));
+            totalSpawns++; entities.push(new Animal('big_boar', baseSpeed * 0.95, direction, 80 + Math.random()*40));
         }
     } 
     else if (chosen === 'ciervo') {
         totalSpawns++;
-        let leader = new Animal('ciervo', baseSpeed * 0.9, direction, 0, false);
-        entities.push(leader);
+        let leader = new Animal('ciervo', baseSpeed * 0.9, direction, 0, false); entities.push(leader);
         let numHembras = 1 + Math.floor(Math.random() * 2);
         for (let i = 0; i < numHembras; i++) {
             totalSpawns++; entities.push(new Animal('ciervo', baseSpeed * 0.9, direction, 0, true, leader));
@@ -405,19 +378,16 @@ function spawnGroup() {
     } 
     else if (chosen === 'muflon') {
         totalSpawns++;
-        let lider = new Animal('muflon', baseSpeed * 0.95, direction, 0, false);
-        entities.push(lider);
+        let lider = new Animal('muflon', baseSpeed * 0.95, direction, 0, false); entities.push(lider);
         for (let i = 0; i < 2; i++) {
             totalSpawns++; entities.push(new Animal('muflon', baseSpeed * 0.95, direction, 0, true, lider));
         }
     } 
     else if (chosen === 'corzo') {
-        totalSpawns++;
-        entities.push(new Animal('corzo', baseSpeed, direction));
+        totalSpawns++; entities.push(new Animal('corzo', baseSpeed, direction));
     }
     else if (chosen === 'pato') {
-        let numPatos = 2 + Math.floor(Math.random() * 2);
-        let d = 0;
+        let numPatos = 2 + Math.floor(Math.random() * 2); let d = 0;
         for (let i = 0; i < numPatos; i++) {
             totalSpawns++; d += 50 + Math.random()*40;
             entities.push(new Animal('pato', baseSpeed * 1.05, direction, d));
@@ -425,7 +395,6 @@ function spawnGroup() {
     }
 }
 
-// --- BALÍSTICA ADAPTATIVA ---
 function fire() {
     if (!canShoot || isPaused || !gameActive) return;
 
@@ -438,164 +407,78 @@ function fire() {
     let hitAnything = false;
 
     if (mode === 'patos') {
-        // Escopeta en patos: Choke cerrado estricto de 20 píxeles
         playSound('shotgun'); recoilY = -30;
-
-        for (let i = 0; i < 10; i++) {
-            let angle = Math.random() * Math.PI * 2;
-            let dist = Math.random() * PATO_CHOKE_RADIUS;
-            particles.push({
-                x: shotX + Math.cos(angle) * dist, y: shotY + Math.sin(angle) * dist,
-                vx: (Math.random() - 0.5) * 1, vy: (Math.random() - 0.5) * 1,
-                radius: 1, alpha: 0.8, color: '#eceff1', life: 5
-            });
+        for (let i = 0; i < 5; i++) {
+            let angle = Math.random() * Math.PI * 2; let dist = Math.random() * PATO_CHOKE_RADIUS;
+            particles.push({ x: shotX + Math.cos(angle) * dist, y: shotY + Math.sin(angle) * dist, vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8, radius: 1, alpha: 0.8, color: '#eceff1', life: 4 });
         }
-
         for (let ent of entities) {
             if (ent.dead) continue;
-            let entCenterX = ent.x + ent.width / 2;
-            let entCenterY = ent.y + ent.height / 2;
-            let distance = Math.hypot(shotX - entCenterX, shotY - entCenterY);
-
+            let distance = Math.hypot(shotX - (ent.x + ent.width / 2), shotY - (ent.y + ent.height / 2));
             if (distance <= PATO_CHOKE_RADIUS + (ent.width / 2)) {
-                createBloodParticles(entCenterX, entCenterY);
+                createBloodParticles(ent.x + ent.width / 2, ent.y + ent.height / 2);
                 hitAnything = true; ent.dead = true; totalKills++;
             }
         }
     } else {
-        // Caza Mayor: Proyectil único de precisión
-        if (currentWeapon === 'rifle') { playSound('rifle'); recoilY = -42; } 
-        else { playSound('shotgun'); recoilY = -40; }
-
+        if (currentWeapon === 'rifle') { playSound('rifle'); recoilY = -42; } else { playSound('shotgun'); recoilY = -40; }
         for (let ent of entities) {
             if (ent.dead) continue;
-
-            // Adelanto adaptativo real según velocidad de carrera
-            let isRunning = PiaraAlerted; 
-            let delaySeconds = isRunning ? 0.16 : 0.01; 
-
+            let delaySeconds = PiaraAlerted ? 0.16 : 0.01; 
             const targetFutureX = ent.x + (ent.currentSpeed * delaySeconds * 60);
 
             if (shotX >= targetFutureX && shotX <= targetFutureX + ent.width && shotY >= ent.y && shotY <= ent.y + ent.height) {
                 createBloodParticles(shotX, shotY);
-                hitAnything = true; ent.dead = true; totalKills++;
-                break;
+                hitAnything = true; ent.dead = true; totalKills++; break;
             }
         }
     }
     
     if (!hitAnything && mode === 'cortadero') {
-        for(let i=0; i<8; i++) {
-            particles.push({
-                x: shotX, y: shotY, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3,
-                radius: 1.5, alpha: 1, color: '#544738', life: 10
-            });
-        }
+        for(let i=0; i<8; i++) particles.push({ x: shotX, y: shotY, vx: (Math.random()-0.5)*3, vy: (Math.random()-0.5)*3, radius: 1.5, alpha: 1, color: '#544738', life: 10 });
     }
-    
     if (!PiaraAlerted) PiaraAlerted = true; 
 }
 
 function createBloodParticles(x, y) {
-    for(let i=0; i<12; i++) {
-        particles.push({
-            x: x, y: y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4 - 1,
-            radius: 2+Math.random()*2, alpha: 1, color: mode==='patos'?'#e0f2f1':'#520202', life: 18
-        });
-    }
+    for(let i=0; i<12; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4 - 1, radius: 2+Math.random()*2, alpha: 1, color: mode==='patos'?'#e0f2f1':'#520202', life: 18 });
 }
 
-// --- TRACKPAD TÁCTIL ---
+// --- TRACKPAD ---
 let touchLastX = 0, touchLastY = 0, isTouching = false;
-function onTrackpadStart(e) {
-    if (isPaused) return; e.preventDefault(); initAudio();
-    if (!e.touches.length) return;
-    isTouching = true; trackpad.classList.add('active');
-    touchLastX = e.touches[0].clientX; touchLastY = e.touches[0].clientY;
-}
-function onTrackpadMove(e) {
-    e.preventDefault(); if (!isTouching || isPaused || !e.touches.length) return;
-    const touch = e.touches[0];
-    crosshair.x += (touch.clientX - touchLastX) * TRACKPAD_SENSITIVITY;
-    crosshair.y += (touch.clientY - touchLastY) * TRACKPAD_SENSITIVITY;
-    touchLastX = touch.clientX; touchLastY = touch.clientY;
-}
-function onTrackpadEnd(e) {
-    e.preventDefault(); if (!isTouching || isPaused) return;
-    isTouching = false; trackpad.classList.remove('active');
-    fire();
-}
+function onTrackpadStart(e) { if (isPaused) return; e.preventDefault(); initAudio(); if (!e.touches.length) return; isTouching = true; trackpad.classList.add('active'); touchLastX = e.touches[0].clientX; touchLastY = e.touches[0].clientY; }
+function onTrackpadMove(e) { e.preventDefault(); if (!isTouching || isPaused || !e.touches.length) return; const touch = e.touches[0]; crosshair.x += (touch.clientX - touchLastX) * TRACKPAD_SENSITIVITY; crosshair.y += (touch.clientY - touchLastY) * TRACKPAD_SENSITIVITY; touchLastX = touch.clientX; touchLastY = touch.clientY; }
+function onTrackpadEnd(e) { e.preventDefault(); if (!isTouching || isPaused) return; isTouching = false; trackpad.classList.remove('active'); fire(); }
 trackpad.addEventListener('touchstart', onTrackpadStart, {passive: false});
 trackpad.addEventListener('touchmove', onTrackpadMove, {passive: false});
 trackpad.addEventListener('touchend', onTrackpadEnd, {passive: false});
 
 // --- MENÚS ---
-const btnCortadero = document.getElementById('btnModoCortadero');
-const btnPatos = document.getElementById('btnModoPatos');
-const panelArmasMonte = document.getElementById('panelArmasMonte');
-const panelEspecies = document.getElementById('panelEspecies');
-const btnRifleMenu = document.getElementById('btnRifleMenu');
-const btnEscopetaMenu = document.getElementById('btnEscopetaMenu');
+const btnCortadero = document.getElementById('btnModoCortadero'); const btnPatos = document.getElementById('btnModoPatos');
+const panelArmasMonte = document.getElementById('panelArmasMonte'); const panelEspecies = document.getElementById('panelEspecies');
+const btnRifleMenu = document.getElementById('btnRifleMenu'); const btnEscopetaMenu = document.getElementById('btnEscopetaMenu');
 
 function checkModeRestrictions() {
-    if (mode === 'patos') {
-        currentWeapon = 'escopeta'; FIRE_DELAY = 450;
-        panelArmasMonte.style.display = 'none'; panelEspecies.style.display = 'none';
-    } else {
-        panelArmasMonte.style.display = 'block'; panelEspecies.style.display = 'block';
-        if (btnRifleMenu.classList.contains('selected')) {
-            currentWeapon = 'rifle'; FIRE_DELAY = 800; // Recarga de cerrojo a 800ms
-        } else {
-            currentWeapon = 'escopeta'; FIRE_DELAY = 450;
-        }
-    }
+    if (mode === 'patos') { currentWeapon = 'escopeta'; FIRE_DELAY = 450; panelArmasMonte.style.display = 'none'; panelEspecies.style.display = 'none'; } 
+    else { panelArmasMonte.style.display = 'block'; panelEspecies.style.display = 'block'; currentWeapon = btnRifleMenu.classList.contains('selected') ? 'rifle' : 'escopeta'; FIRE_DELAY = currentWeapon === 'rifle' ? 800 : 450; }
 }
-
 btnCortadero.addEventListener('click', () => { mode = 'cortadero'; btnCortadero.classList.add('selected'); btnPatos.classList.remove('selected'); checkModeRestrictions(); });
 btnPatos.addEventListener('click', () => { mode = 'patos'; btnPatos.classList.add('selected'); btnCortadero.classList.remove('selected'); checkModeRestrictions(); });
 btnRifleMenu.addEventListener('click', () => { btnRifleMenu.classList.add('selected'); btnEscopetaMenu.classList.remove('selected'); checkModeRestrictions(); });
 btnEscopetaMenu.addEventListener('click', () => { btnEscopetaMenu.classList.add('selected'); btnRifleMenu.classList.remove('selected'); checkModeRestrictions(); });
-
 document.getElementById('btnStart').addEventListener('click', () => { initAudio(); document.getElementById('mainMenu').style.display = 'none'; resetGame(); });
 document.getElementById('btnRestart').addEventListener('click', () => { document.getElementById('resultsMenu').style.display = 'none'; resetGame(); });
 document.getElementById('btnHome').addEventListener('click', () => { gameActive = false; isPaused = true; document.getElementById('pauseMenu').style.display = 'none'; document.getElementById('resultsMenu').style.display = 'none'; document.getElementById('mainMenu').style.display = 'flex'; });
-
-document.getElementById('pauseBtn').addEventListener('click', () => {
-    isPaused = true;
-    if (mode === 'patos') {
-        document.getElementById('panelArmasPausa').style.display = 'none'; document.getElementById('lblAvisoPatos').style.display = 'block';
-    } else {
-        document.getElementById('panelArmasPausa').style.display = 'block'; document.getElementById('lblAvisoPatos').style.display = 'none';
-        if (currentWeapon === 'rifle') {
-            document.getElementById('btnRifle').classList.add('selected'); document.getElementById('btnEscopeta').classList.remove('selected');
-        } else {
-            document.getElementById('btnEscopeta').classList.add('selected'); document.getElementById('btnRifle').classList.remove('selected');
-        }
-    }
-    document.getElementById('pauseMenu').style.display = 'flex';
-});
-
+document.getElementById('pauseBtn').addEventListener('click', () => { isPaused = true; if (mode === 'patos') { document.getElementById('panelArmasPausa').style.display = 'none'; document.getElementById('lblAvisoPatos').style.display = 'block'; } else { document.getElementById('panelArmasPausa').style.display = 'block'; document.getElementById('lblAvisoPatos').style.display = 'none'; if (currentWeapon === 'rifle') { document.getElementById('btnRifle').classList.add('selected'); document.getElementById('btnEscopeta').classList.remove('selected'); } else { document.getElementById('btnEscopeta').classList.add('selected'); document.getElementById('btnRifle').classList.remove('selected'); } } document.getElementById('pauseMenu').style.display = 'flex'; });
 document.getElementById('btnRifle').addEventListener('click', () => { currentWeapon = 'rifle'; FIRE_DELAY = 800; document.getElementById('btnRifle').classList.add('selected'); document.getElementById('btnEscopeta').classList.remove('selected'); });
 document.getElementById('btnEscopeta').addEventListener('click', () => { currentWeapon = 'escopeta'; FIRE_DELAY = 450; document.getElementById('btnEscopeta').classList.add('selected'); document.getElementById('btnRifle').classList.remove('selected'); });
 document.getElementById('btnResume').addEventListener('click', () => { isPaused = false; document.getElementById('pauseMenu').style.display = 'none'; });
 
-function setupToggle(id, key) {
-    document.getElementById(id).addEventListener('click', function() { activeSpecies[key] = !activeSpecies[key]; this.classList.toggle('selected', activeSpecies[key]); });
-}
+function setupToggle(id, key) { document.getElementById(id).addEventListener('click', function() { activeSpecies[key] = !activeSpecies[key]; this.classList.toggle('selected', activeSpecies[key]); }); }
 setupToggle('cfgBoar', 'boar'); setupToggle('cfgCiervo', 'ciervo'); setupToggle('cfgMuflon', 'muflon'); setupToggle('cfgCorzo', 'corzo');
 
-function resetGame() {
-    gameTimer = 45; totalKills = 0; totalSpawns = 0; entities = []; particles = [];
-    PiaraAlerted = false; isPaused = false; gameActive = true;
-    generateEnvironment();
-    lastSpawnTime = performance.now();
-}
-
-function endGame() {
-    gameActive = false; isPaused = true;
-    document.getElementById('resultsMenu').style.display = 'flex';
-    document.getElementById('resDetails').innerHTML = `LANCE COMPLETADO<br><br>Reses Avistadas: ${totalSpawns}<br>Blancos Cobrados: <span style="color:#4cd964; font-size:24px;">${totalKills}</span>`;
-}
+function resetGame() { gameTimer = 45; totalKills = 0; entities = []; particles = []; PiaraAlerted = false; isPaused = false; gameActive = true; generateEnvironment(); nextSpawnTimeout = performance.now() + 1000; }
+function endGame() { gameActive = false; isPaused = true; document.getElementById('resultsMenu').style.display = 'flex'; document.getElementById('resDetails').innerHTML = `LANCE COMPLETADO<br><br>Reses Avistadas: ${totalSpawns}<br>Blancos Cobrados: <span style="color:#4cd964; font-size:24px;">${totalKills}</span>`; }
 
 // --- CICLO CORE CONTÍNUO ---
 let lastTime = 0;
@@ -615,10 +498,10 @@ function loop(timestamp) {
         cadenceBar.style.width = (progress * 100) + '%';
         if (progress >= 1) { 
             canShoot = true; cadenceBar.classList.add('ready'); 
-            document.getElementById('trackpadLabel').innerText = mode === 'patos' ? "CHOKE 20PX LISTO" : (currentWeapon === 'rifle' ? "CERROJO LISTO (800ms)" : "BALA DE ESCOPETA EN RECAMARA");
+            document.getElementById('trackpadLabel').innerText = mode === 'patos' ? "ESCOPETA LISTA (PLOMEO 4PX)" : (currentWeapon === 'rifle' ? "CERROJO LISTO (800ms)" : "BALA DE ESCOPETA EN RECAMARA");
         } else { 
             canShoot = false; cadenceBar.classList.remove('ready'); 
-            document.getElementById('trackpadLabel').innerText = "RECUPERANDO ENCARADO..."; 
+            document.getElementById('trackpadLabel').innerText = "RECUPERANDO ARMA..."; 
         }
 
         spawnControl();
@@ -628,22 +511,18 @@ function loop(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (mode === 'cortadero') {
-        let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.44);
-        skyGrad.addColorStop(0, '#576f80'); skyGrad.addColorStop(1, '#b0c2cc');
-        ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.44); skyGrad.addColorStop(0, '#576f80'); skyGrad.addColorStop(1, '#b0c2cc'); ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#4f4130'; ctx.fillRect(0, canvas.height * 0.44, canvas.width, canvas.height * 0.56);
     } else {
         ctx.fillStyle = '#7a9cb3'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        let waterGrad = ctx.createLinearGradient(0, canvas.height * 0.4, 0, canvas.height);
-        waterGrad.addColorStop(0, '#132224'); waterGrad.addColorStop(1, '#1b3635');
-        ctx.fillStyle = waterGrad; ctx.fillRect(0, canvas.height * 0.4, canvas.width, canvas.height * 0.6);
+        let waterGrad = ctx.createLinearGradient(0, canvas.height * 0.4, 0, canvas.height); waterGrad.addColorStop(0, '#132224'); waterGrad.addColorStop(1, '#1b3635'); ctx.fillStyle = waterGrad; ctx.fillRect(0, canvas.height * 0.4, canvas.width, canvas.height * 0.6);
     }
 
     entities.forEach(ent => ent.draw());
 
+    // Arbustos con degradado suave radial
     bushes.forEach(b => {
-        let grad = ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, b.radius);
-        grad.addColorStop(0, b.color); grad.addColorStop(1, '#0b0f07');
+        let grad = ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, b.radius); grad.addColorStop(0, b.color); grad.addColorStop(1, '#0b0f07');
         ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2); ctx.fill();
     });
 
@@ -655,17 +534,9 @@ function loop(timestamp) {
     crosshair.x = Math.max(20, Math.min(canvas.width - 20, crosshair.x));
     crosshair.y = Math.max(canvas.height * 0.1, Math.min(canvas.height * 0.76, crosshair.y));
 
-    // --- INTERFAZ RETICULAR Y DE ARMAS ---
+    // --- INTERFAZ RETÍCULA / CAÑÓN ---
     ctx.save();
-    let gunX = crosshair.x;
-    let gunY = crosshair.y + recoilY;
-    let baseW = canvas.width * 0.25;
-
-    // Guía del plomeo de 20px estricto en patos
-    if (mode === 'patos' && !isPaused) {
-        ctx.strokeStyle = 'rgba(255, 183, 3, 0.4)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, PATO_CHOKE_RADIUS, 0, Math.PI * 2); ctx.stroke();
-    }
+    let gunX = crosshair.x; let gunY = crosshair.y + recoilY; let baseW = canvas.width * 0.25;
 
     if (currentWeapon === 'rifle' && mode === 'cortadero') {
         ctx.fillStyle = '#14171a'; ctx.beginPath();
@@ -675,12 +546,13 @@ function loop(timestamp) {
         ctx.strokeStyle = '#050505'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(gunX, gunY + 5, 32, 0, Math.PI*2); ctx.stroke();
         ctx.fillStyle = '#ff1a1a'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 2.5, 0, Math.PI*2); ctx.fill();
     } else {
-        let woodGrad = ctx.createLinearGradient(gunX - 22, canvas.height, gunX + 22, canvas.height);
-        woodGrad.addColorStop(0, '#381e0b'); woodGrad.addColorStop(1, '#241306');
-        ctx.fillStyle = woodGrad; ctx.beginPath();
+        // Escopeta instintiva pura (Sin punto amarillo ni círculos Minecraft)
+        let woodGrad = ctx.createLinearGradient(gunX - 22, canvas.height, gunX + 22, canvas.height); woodGrad.addColorStop(0, '#381e0b'); woodGrad.addColorStop(1, '#241306'); ctx.fillStyle = woodGrad; ctx.beginPath();
         ctx.moveTo(canvas.width/2 - baseW*0.55 + (gunX - canvas.width/2)*0.22, canvas.height); ctx.lineTo(canvas.width/2 + baseW*0.55 + (gunX - canvas.width/2)*0.22, canvas.height);
         ctx.lineTo(gunX + 13, gunY + 80); ctx.lineTo(gunX - 13, gunY + 80); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#ffb703'; ctx.beginPath(); ctx.arc(crosshair.x, crosshair.y, 2.5, 0, Math.PI*2); ctx.fill();
+        
+        let metalGrad = ctx.createLinearGradient(gunX - 8, gunY + 80, gunX + 8, gunY + 80); metalGrad.addColorStop(0, '#16181a'); metalGrad.addColorStop(1, '#0b0c0d'); ctx.fillStyle = metalGrad; ctx.beginPath();
+        ctx.moveTo(gunX - 9, gunY + 80); ctx.lineTo(gunX + 9, gunY + 80); ctx.lineTo(gunX + 3, gunY); ctx.lineTo(gunX - 3, gunY); ctx.closePath(); ctx.fill();
     }
     ctx.restore();
 
